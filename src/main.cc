@@ -34,7 +34,6 @@ int main() {
 
         // Uncomment for docking support
         // ImGui::DockSpaceOverViewport();
-        ImGui::ShowDemoWindow();
 
         if (ImGui::BeginMainMenuBar()) {
             if (ImGui::BeginMenu("File")) {
