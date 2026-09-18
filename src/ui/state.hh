@@ -1,8 +1,10 @@
 // The state of the UI
 // It's really not in a good state
 
-#ifndef __STATE_HPP_IFNDEF__
-#define __STATE_HPP_IFNDEF__
+#ifndef __STATE_HH_IFNDEF__
+#define __STATE_HH_IFNDEF__
+
+#include <GLFW/glfw3.h>
 
 namespace CardflashUI {
     enum Screen : short;
@@ -12,7 +14,7 @@ namespace CardflashUI {
 
         public:
             UiState();
-            void Render(int w, int h);
+            void Render(int w, int h, GLFWwindow* window);
     };
 }
 

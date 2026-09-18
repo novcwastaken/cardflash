@@ -1,8 +1,8 @@
+// The state of the UI
+
 #include "state.hh"
-
-#include "imgui.h"
-
-// The state of the ui
+#include "ui/screens/screens.hh"
+#include "ui/widgets/top_bar.hh"
 
 namespace CardflashUI {
     /// Possible states of the main window
@@ -22,28 +22,8 @@ namespace CardflashUI {
         screen = Screen::Menu;
     }
 
-    void UiState::Render(int w, int h) {
-        if (ImGui::BeginMainMenuBar()) {
-            if (ImGui::BeginMenu("Cardflash")) {
-                ImGui::MenuItem("Create Set...");
-                ImGui::MenuItem("Open Set...");
-                if (ImGui::BeginMenu("Open Recent Set")) {
-                    ImGui::MenuItem("sex1.cardflash");
-                    ImGui::MenuItem("rape2.cardflash");
-                    ImGui::MenuItem("assault3.cardflash");
-                    ImGui::MenuItem("anal4.cardflash");
-                    ImGui::MenuItem("femboy_thighs5.cardflash");
-
-                    ImGui::EndMenu();
-                }
-
-                ImGui::Separator(); // Cool ass sep
-
-                ImGui::MenuItem("Quit");
-
-                ImGui::EndMenu();
-            }
-            ImGui::EndMainMenuBar();
-        }
+    void UiState::Render(int w, int h, GLFWwindow* window) {
+        float top_bar_height = CardflashUI::TopBar(window);
+        CardflashUI::MainMenu(w, h, top_bar_height);
     }
 }

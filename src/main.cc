@@ -43,7 +43,7 @@ int main() {
 
         int w, h;
         glfwGetFramebufferSize(window, &w, &h);
-        state_ptr->Render(w, h);
+        state_ptr->Render(w, h, window);
 
 
         ImGui::Render();
