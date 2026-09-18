@@ -1,1 +1,3 @@
-cmake -B build -S . -DCMAKE_BUILD_TYPE=Debug
+#!/bin/sh
+
+cmake --build build -j$(nproc)
