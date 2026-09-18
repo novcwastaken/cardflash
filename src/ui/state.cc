@@ -1,6 +1,7 @@
 #include "state.hpp"
 
 #include "imgui.h"
+#include <iostream>
 
 // The state of the ui
 
@@ -25,10 +26,22 @@ namespace CardflashUI {
     void UiState::Render(int w, int h) {
         if (ImGui::BeginMainMenuBar()) {
             if (ImGui::BeginMenu("Cardflash")) {
-                ImGui::MenuItem("New Set...");
+                ImGui::MenuItem("Create Set...");
                 ImGui::MenuItem("Open Set...");
-                ImGui::Separator();
+                if (ImGui::BeginMenu("Open Recent Set")) {
+                    ImGui::MenuItem("sex1.cardflash");
+                    ImGui::MenuItem("rape2.cardflash");
+                    ImGui::MenuItem("assault3.cardflash");
+                    ImGui::MenuItem("anal4.cardflash");
+                    ImGui::MenuItem("femboy_thighs5.cardflash");
+
+                    ImGui::EndMenu();
+                }
+
+                ImGui::Separator(); // Cool ass sep
+
                 ImGui::MenuItem("Quit");
+
                 ImGui::EndMenu();
             }
             ImGui::EndMainMenuBar();
