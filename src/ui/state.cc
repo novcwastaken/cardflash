@@ -1,7 +1,6 @@
-#include "state.hpp"
+#include "state.hh"
 
 #include "imgui.h"
-#include <iostream>
 
 // The state of the ui
 

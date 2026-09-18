@@ -1,4 +1,4 @@
-#include "ui/state.hpp"
+#include "ui/state.hh"
 
 #include <GLFW/glfw3.h>
 #include "imgui.h"
@@ -23,7 +23,7 @@ int main() {
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-    // Disbale the ini file
+    // Disable the ini file
     io.IniFilename = nullptr;
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);

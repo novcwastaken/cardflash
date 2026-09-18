@@ -3,6 +3,7 @@
 
 namespace CardflashUI {
     void MainMenu();
+    void SunshinesAndRainbows();
 }
 
 #endif

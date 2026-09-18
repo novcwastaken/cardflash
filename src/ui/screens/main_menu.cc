@@ -2,10 +2,20 @@
 
 namespace CardflashUI {
     /// The main menu (wow)
-    void MainMenu() {
+    void MainMenu() { // TODO: Hide title
         ImGui::Begin("Main Menu");
-        ImGui::Text("Welcome!");
-        ImGui::Text("balls.");
+
+        if (ImGui::Button("Create")) {}
+        ImGui::SameLine();
+        if (ImGui::Button("Open")) {}
+        ImGui::SameLine();
+        if (ImGui::Button("Import")) {}
+
         ImGui::End();
+    }
+
+    /// Empty, undocumented and obsolute function
+    void SunshinesAndRainbows() {
+
     }
 }
