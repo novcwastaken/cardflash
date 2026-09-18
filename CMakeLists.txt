@@ -18,6 +18,12 @@ add_library(imgui STATIC
   ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
 )
 
+if(MSVC)
+  add_compile_options(/WX)
+else()
+  add_compile_options(-Werror)
+endif()
+
 target_include_directories(imgui PUBLIC
   ${IMGUI_DIR}
   ${IMGUI_DIR}/backends

@@ -1,3 +1,5 @@
+#include "ui/state.hpp"
+
 #include <GLFW/glfw3.h>
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -21,9 +23,13 @@ int main() {
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    // Disbale the ini file
+    io.IniFilename = nullptr;
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
+
+    CardflashUI::UiState* state_ptr = new CardflashUI::UiState();
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -35,20 +41,12 @@ int main() {
         // Uncomment for docking support
         // ImGui::DockSpaceOverViewport();
 
-        if (ImGui::BeginMainMenuBar()) {
-            if (ImGui::BeginMenu("File")) {
-                ImGui::MenuItem("Miau");
-                ImGui::MenuItem("Miau2");
-
-                ImGui::EndMenu();
-            }
-
-            ImGui::EndMainMenuBar();
-        }
-
-        ImGui::Render();
         int w, h;
         glfwGetFramebufferSize(window, &w, &h);
+        state_ptr->Render(w, h);
+
+
+        ImGui::Render();
         glViewport(0, 0, w, h);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
