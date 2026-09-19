@@ -1,9 +1,9 @@
 #include "backend.hh"
 
-#include <iostream>
 #include <iterator>
 #include <cstdint>
 #include <format>
+#include <optional>
 
 #define EVIL_MODE true
 
@@ -55,6 +55,15 @@ namespace Cardflash {
         this->subject = std::move(subject);
     }
 
+    enum DeserStage : short {
+        Author,
+        Title,
+        Subject,
+        CardFront,
+        CardBack
+    };
+
+    /// Deserialization
     inline Set::Set(std::vector<uint8_t>& in) {
         // Min size of a set is 8 bytes: ?\n?\n\n?\n?
         if (in.size() < 8)
@@ -68,74 +77,76 @@ namespace Cardflash {
             ));
         #endif // EVIL_MODE
 
-        enum State : short {
-            Author,
-            Title,
-            Subject,
-            CardFront,
-            CardBack
-        };
-
-        State s = State::Author;
-        std::string* buff = new std::string();
-        std::string card_front_buffer = nullptr;
+        DeserStage s = DeserStage::Author;
+        std::string buff = std::string();
+        std::optional<std::string> card_front_buffer = std::nullopt;
 
         for (size_t i = 0; i < in.size(); ++i) {
             char c = in[i];
 
             if (c == '\n' || i == in.size() - 1) {
+                // std::cout << "State: " << s << " Buff: " << buff << std::endl;
+
                 switch (s) {
-                    case State::Author:
-                        if (buff->empty())
+                    case DeserStage::Author:
+                        if (buff.empty())
                             throw(DeserializationError(
                                 "Missing author field (field is empty)"
                             ));
-                        this->author = std::move(*buff);
+                        this->author = std::move(buff);
 
                         break;
-                    case State::Title:
-                        if (buff->empty())
+                    case DeserStage::Title:
+                        if (buff.empty())
                             throw(DeserializationError(
                                 "Missing title field (field is empty)"
                             ));
-                        this->title = std::move(*buff);
+                        this->title = std::move(buff);
 
                         break;
-                    case State::Subject:
-                        if (buff->empty()) this->author = "";
-                        else this->subject = std::move(*buff);
+                    case DeserStage::Subject:
+                        if (buff.empty()) this->subject = "";
+                        else this->subject = std::move(buff);
 
                         break;
-                    case State::CardFront:
-                        if (buff->empty())
+                    case DeserStage::CardFront:
+                        if (buff.empty())
                             throw(DeserializationError(
                                 "Missing a card's front field (field is empty)"
                             ));
-                        card_front_buffer = std::move(*buff);
+                        card_front_buffer = std::move(buff);
 
                         break;
-                    case State::CardBack:
-                        if (buff->empty())
+                    case DeserStage::CardBack:
+                        if (buff.empty())
                             throw(DeserializationError(
                                 "Missing a card's back field (field is empty)"
                             ));
-                        this->cards.push_back(
-                            Card(std::move(card_front_buffer), std::move(*buff))
-                        );
-                        card_front_buffer = nullptr;
+
+                        if (card_front_buffer) {
+                            this->Expand(
+                                Card(std::move(card_front_buffer.value()), std::move(buff))
+                            );
+
+                            card_front_buffer = std::nullopt;
+                        } else throw std::runtime_error("Front card wasn't parsed");
+
                         break;
                 }
 
                 // Move forward, or if at the end of the modes, go back one
-                s = static_cast<State>((s == State::CardBack) ? s - 1 : s + 1);
+                s = static_cast<DeserStage>((s == DeserStage::CardBack) ? s - 1 : s + 1);
             } else
-                buff->push_back(c);
+                buff.push_back(c);
         }
-
-        delete buff;
     }
 
     std::vector<uint8_t> Set::Serialize() {
+        if (!this->are_cards_ready)
+            throw(SetNotFinalized(
+                "Sets are required to be finalized before being serialized!"
+            ));
+
         // How much bytes to allocate for the output buffer
         size_t reserve_size =
             this->author.size() + 1 // Author + \n
@@ -167,15 +178,12 @@ namespace Cardflash {
             );
         }
 
-        if (reserve_size != buff.size()) {
-            std::cout <<
-                std::format(
-                    "reserver size({}) != buff.size() ({})",
-                    reserve_size,
-                    buff.size()
-                )
-                << std::endl;
-        }
+        if (reserve_size != buff.size())
+            throw(std::runtime_error(std::format(
+                "reserver size({}) != buff.size() ({})",
+                reserve_size,
+                buff.size()
+            )));
 
         return buff;
     }
@@ -214,9 +222,37 @@ namespace Cardflash {
 
     inline const std::vector<Card>& Set::GetRefCards() const {
         if (!this->are_cards_ready)
-            throw(SetNotFinalized("The set is not ready to be read!"));
+            throw(SetNotFinalized("The set is not ready to be read! (cards are not ready)"));
 
         return this->cards;
+    }
+
+    inline const std::string Set::DebugFmt() const {
+        std::string buff;
+
+        buff.append(std::format(
+            "Title: {}, Author: {}, Subject: {}, Cards:",
+            this->title,
+            this->author,
+            this->subject
+        ));
+
+        if (!this->are_cards_ready)
+            buff.append(" NONE\n");
+        else {
+            buff.append("\n");
+            for (size_t i = 0; i < this->cards.size(); ++i) {
+                auto card = &this->cards[i];
+                buff.append(std::format(
+                    "\t{}. Front: {} -- Back: {}\n",
+                    i,
+                    card->GetFront(),
+                    card->GetBack()
+                ));
+            }
+        }
+
+        return buff;
     }
     // end class Set
 }

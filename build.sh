@@ -1,3 +1,3 @@
 #!/bin/sh
 
-cmake --build build -j$(nproc)
+cmake --build build --target Cardflash -j$(nproc)

@@ -1,11 +1,11 @@
 #pragma once
-#include <stdexcept>
 #ifndef __BACKEND_HPP_GUARD__
 #define __BACKEND_HPP_GUARD__
 
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <stdexcept>
 
 namespace Cardflash {
     class EmptyString : public std::runtime_error {
@@ -47,18 +47,27 @@ namespace Cardflash {
     };
 
     class Set {
+        #ifdef CARDFLASH_BACKEND_DEBUG
+        public:
+        #endif
+
         /// False if the set was created but the cards still
         /// holds no members. Becomes true when the first Expand()
         /// is called.
         bool are_cards_ready = false;
+
+        std::vector<Card> cards;
+
+        #ifndef CARDFLASH_BACKEND_DEBUG
         public:
+        #endif
             std::string author, title, subject;
-            std::vector<Card> cards;
 
             /// Throws an EmptyString if either title of author is empty
             Set(std::string author, std::string title, std::string subject);
 
-            /// Constructs a set from a Serialize()-d array of bytes. Throws
+            /// Constructs a set from a Serialize()-d array of bytes.
+            /// May throw DeserializationError if the input isn't valid!
             Set(std::vector<uint8_t>& serialized);
 
             /// Returns whether the set is ready to be read (finalized).
@@ -82,11 +91,17 @@ namespace Cardflash {
 
             /// Serializes the object into an array of bytes.
             ///
+            /// Throws:
+            ///     SetNotFinalized if the set is not finalized!
+            ///
             /// Serialized representation:
             /// AUTHOR \n TITLE \n SUBJECT \n
             /// CARD[n].FRONT \n CARD[n].BACK \n
             /// CARD[n].FRONT \n CARD[n].BACK \n
             std::vector<uint8_t> Serialize();
+
+            /// Returns a debug string
+            inline const std::string DebugFmt() const;
     };
 }
 

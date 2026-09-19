@@ -19,9 +19,9 @@ add_library(imgui STATIC
 )
 
 if(MSVC)
-  add_compile_options(/WX)
+  add_compile_options(/WX /W4)
 else()
-  add_compile_options(-Werror)
+  add_compile_options(-Wall -Werror)
 endif()
 
 target_include_directories(imgui PUBLIC
@@ -35,3 +35,25 @@ file(GLOB_RECURSE CARDFLASH_SOURCES CONFIGURE_DEPENDS src/*.cc)
 add_executable(Cardflash ${CARDFLASH_SOURCES})
 target_include_directories(Cardflash PRIVATE src)
 target_link_libraries(Cardflash PRIVATE imgui)
+
+
+
+
+
+# ===== TESTS =====
+include(FetchContent)
+FetchContent_Declare(
+  Catch2
+  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+  GIT_TAG        v3.7.1
+)
+FetchContent_MakeAvailable(Catch2)
+
+enable_testing()
+file(GLOB_RECURSE TEST_SRCS CONFIGURE_DEPENDS tests/*.cc)
+add_executable(tests ${TEST_SRCS})
+target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
+
+include(Catch)  # from Catch2 3.x, wait — see note below
+catch_discover_tests(tests)
+
