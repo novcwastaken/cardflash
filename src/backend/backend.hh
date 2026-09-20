@@ -26,9 +26,17 @@ namespace Cardflash {
                 : std::runtime_error(msg) {}
     };
 
+    enum CardLearningStatus : uint8_t {
+        Unknown = 0b00000011, // 0
+        Learning = 0b00000001, // 1
+        Know = 0b00000010, // 2
+    };
+
     class Card {
         std::string front, back;
         public:
+            CardLearningStatus learning_status;
+
             /// Throws a EmptyString if either front or back
             /// has a lenght of 0.
             Card(std::string front, std::string back);
@@ -44,6 +52,8 @@ namespace Cardflash {
 
             /// Returns the length of the front and back
             inline const size_t GetFrontAndBackSize() const;
+
+            inline const std::string LearningStatusFmt() const;
     };
 
     class Set {
@@ -62,6 +72,13 @@ namespace Cardflash {
         public:
         #endif
             std::string author, title, subject;
+
+            /// The correct answers from the user in learn mode.
+            /// One element represents one run in learn mode.
+            std::vector<uint16_t> learn_correct;
+            /// The correct answers from the user in connect mode.
+            /// One element represents one run in connect mode.
+            std::vector<uint16_t> connect_correct;
 
             /// Throws an EmptyString if either title of author is empty
             Set(std::string author, std::string title, std::string subject);
@@ -95,9 +112,22 @@ namespace Cardflash {
             ///     SetNotFinalized if the set is not finalized!
             ///
             /// Serialized representation:
-            /// AUTHOR \n TITLE \n SUBJECT \n
+            /// AUTHOR\n
+            /// TITLE\n
+            /// SUBJECT\n
+            /// little endia array of bytes:  LEARN_CORRECT\n
+            /// little endia array of bytes:  CONNECT_CORRECT\n
+            /// array of bytes*: CARD[n].learningstatus\n
             /// CARD[n].FRONT \n CARD[n].BACK \n
             /// CARD[n].FRONT \n CARD[n].BACK \n
+            ///
+            /// *: 1 byte stores 4 cards' learning status (left -> right = [0] -> [n]):
+            ///     11: Unknown
+            ///     10: Known
+            ///     01: Still learning
+            ///     00: Not occupied
+            ///
+            /// Min size is 13!
             std::vector<uint8_t> Serialize();
 
             /// Returns a debug string

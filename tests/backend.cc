@@ -20,7 +20,9 @@ bool operator==(const Cardflash::Set& a, const Cardflash::Set& b) {
     for (size_t i = 0; i < cards_a.size(); ++i) {
         if (
         cards_a[i].GetFront() != cards_b[i].GetFront() ||
-        cards_a[i].GetBack() != cards_b[i].GetBack())
+        cards_a[i].GetBack() != cards_b[i].GetBack() ||
+        cards_a[i].learning_status != cards_b[i].learning_status
+        )
             return false;
     }
 
@@ -65,6 +67,4 @@ TEST_CASE("(De)serialization of Set", "[serde]") {
 
         REQUIRE_THROWS_AS(set.Serialize(), Cardflash::SetNotFinalized);
     }
-
-
 }
