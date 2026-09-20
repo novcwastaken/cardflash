@@ -2,11 +2,10 @@
 
 #include "state.hh"
 #include "ui/screens/screens.hh"
-#include "ui/widgets/top_bar.hh"
 
 namespace CardflashUI {
     /// Possible states of the main window
-    enum Screen : short {
+    enum class Screen : short {
         /// In the menu
         Menu,
         /// Viewing a set
@@ -23,7 +22,7 @@ namespace CardflashUI {
     }
 
     void UiState::Render(int w, int h, GLFWwindow* window) {
-        float top_bar_height = CardflashUI::TopBar(window);
+        float top_bar_height = this->TopBar(window);
         CardflashUI::MainMenu(w, h, top_bar_height);
     }
 }

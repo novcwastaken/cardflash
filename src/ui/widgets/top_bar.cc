@@ -1,11 +1,13 @@
+#include "ui/state.hh"
+
 #include "imgui.h"
 #include <GLFW/glfw3.h>
-#include "top_bar.hh"
+#include <utility>
 
 namespace CardflashUI {
     /// The menu bar at the top of the window.
     /// Returns the final height of the top bar, due to reasons.
-    float TopBar(GLFWwindow* window) {
+    float UiState::TopBar(GLFWwindow* window) {
         float final_height;
 
         if (ImGui::BeginMainMenuBar()) {
@@ -47,6 +49,11 @@ namespace CardflashUI {
 
             final_height = ImGui::GetWindowSize().y;
             ImGui::EndMainMenuBar();
+        } else {
+            // This branch should not happen
+            // Also shuts up the compiler about final_height
+            // possibly not being initalized
+            std::unreachable();
         }
 
         return final_height;

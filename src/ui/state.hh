@@ -7,10 +7,13 @@
 #include <GLFW/glfw3.h>
 
 namespace CardflashUI {
-    enum Screen : short;
+    enum class Screen : short;
 
     class UiState {
         Screen screen;
+
+        /// Renders the top menu bar
+        float TopBar(GLFWwindow* window);
 
         public:
             UiState();
@@ -18,4 +21,4 @@ namespace CardflashUI {
     };
 }
 
-#endif
+#endif // __STATE_HH_IFNDEF
