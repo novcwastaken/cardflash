@@ -41,6 +41,8 @@ namespace Cardflash {
             /// has a lenght of 0.
             Card(std::string front, std::string back);
 
+            Card(std::string front, std::string back, CardLearningStatus lstatus);
+
             const std::string& GetFront() const;
             const std::string& GetBack() const;
 

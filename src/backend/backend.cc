@@ -1,25 +1,17 @@
 #include "backend.hh"
 
+#include <bitset>
 #include <iostream>
 #include <iterator>
 #include <cstdint>
 #include <format>
 #include <optional>
+#include <queue>
 #include <utility>
 
 #define EVIL_MODE true
 
 namespace Cardflash {
-    // inline bool is_little_endian() {
-    //     // 00000000 00000001
-    //     uint16_t a = 1;
-    //     // On littel endian this will point to the second half
-    //     // which is 1, on big endian this will point to the first half
-    //     uint8_t *p = reinterpret_cast<uint8_t*>(&a);
-
-    //     return *p == 1;
-    // }
-
     inline void U16ToLEBytes(uint16_t value, uint8_t destination[2]) {
         destination[0] = (uint8_t)(value & 0b0000000011111111); // Low byte
         destination[1] = (uint8_t)(value >> 8);                 // High byte
@@ -42,6 +34,15 @@ namespace Cardflash {
         this->front = std::move(front);
         this->back = std::move(back);
         this->learning_status = CardLearningStatus::Unknown;
+    }
+
+    inline Card::Card(std::string front, std::string back, CardLearningStatus lstatus) {
+        if (front.length() == 0 || back.length() == 0)
+            throw EmptyString("Tried to init a Card with the front or back being an empty string");
+
+        this->front = std::move(front);
+        this->back = std::move(back);
+        this->learning_status = lstatus;
     }
 
     inline const std::string& Card::GetFront() const {
@@ -82,6 +83,9 @@ namespace Cardflash {
                 break;
             case CardLearningStatus::Learning:
                 buff = "Still learning";
+                break;
+            default:
+                buff = "????";
                 break;
         }
 
@@ -130,7 +134,8 @@ namespace Cardflash {
 
         std::optional<std::string> card_front_buffer = std::nullopt;
 
-        std::vector<CardLearningStatus> card_learning_status;
+        std::queue<CardLearningStatus> card_learning_status_q;
+        bool learning_status_finalized = false;
 
         for (size_t i = 0; i < in.size(); ++i) {
             const char c = in[i];
@@ -167,16 +172,6 @@ namespace Cardflash {
                         break;
                     case DeserStage::LearnCorrect:
                         if (buff.empty()) break;
-
-
-                        std::cout << "Learn stats buffer: " << std::endl;
-                        for (const auto c : buff) {
-                            if (c=='\n')
-                                std::cout << "\\n";
-                            else
-                                std::cout << (char)c;
-                        }
-                        std::cout << std::endl;
 
                         if (buff.size() % 2 == 1) throw(DeserializationError(
                             "Learn statistic data is corrupted (odd number of bytes)"
@@ -222,17 +217,30 @@ namespace Cardflash {
                     case DeserStage::LearningStatus:
                         if (buff.empty()) break;
 
-                        // 111111** << 6 **000000 >> 6 000000**
-                        // 1111**00 << 4 **000000 >> 6 000000**
-                        // 11**0000 << 2 **000000 >> 6 0000000
-                        // **000000 << 0 **000000 >> 6 0000000
-
+                        // **000000 >> 6 | 00000011
+                        // 00**0000 >> 6 | 00000011
                         for (const auto byte : buff) {
-                            for (char bit_offset = 6; bit_offset >= 0; bit_offset -= 2) {
-                                uint8_t raw = byte << bit_offset >> 6;
-                                if (raw != 0)
-                                    card_learning_status
-                                        .push_back(static_cast<CardLearningStatus>(raw));
+                            // std::cout << "Lstatus Deser: byte: " << std::bitset<8>(byte) << std::endl;
+
+                            for (int8_t bit_offset = 6; bit_offset >= 0; bit_offset -= 2) {
+                                uint8_t raw = (byte >> (bit_offset)) & 0b00000011;
+
+                                if (raw != 0 && learning_status_finalized)
+                                    throw(DeserializationError(
+                                        "Invalid Learning Status byte:non padding\
+                                            byte after the first padding byte!"
+                                    ));
+                                else if (raw != 0){
+                                    card_learning_status_q
+                                        .push(static_cast<CardLearningStatus>(raw));
+
+                                    // std::cout
+                                    //     << "Pushing Lstatus Deser: bit offset: "
+                                    //     << (int)bit_offset << "\tpushed: "
+                                    //     << std::bitset<2>(raw) << std::endl;
+                                }
+                                else
+                                    learning_status_finalized = true;
                             }
                         }
 
@@ -256,29 +264,25 @@ namespace Cardflash {
                             ));
 
                         if (card_front_buffer) {
+                            if (card_learning_status_q.empty())
+                                throw(DeserializationError(
+                                    "Less provided learning status bits than learning cards"
+                                ));
+
+                            auto learning_status = card_learning_status_q.front();
+
                             this->Expand(
                                 Card(
                                     std::move(card_front_buffer.value()),
-                                    std::string(buff.begin(), buff.end())
+                                    std::string(buff.begin(), buff.end()),
+                                    learning_status
                                 )
                             );
                             card_front_buffer = std::nullopt;
 
+                            card_learning_status_q.pop();
                             buff.clear();
-
-                            if (this->cards.size() <= card_learning_status.size()) {
-                                this
-                                    ->cards
-                                    .end()
-                                    ->learning_status =
-                                        card_learning_status
-                                        [this->cards.size() -1];
-                            } else {
-                                throw(DeserializationError(
-                                    "There are more learning status stats than cards!"
-                                ));
-                            }
-                        } else throw std::runtime_error("Front card wasn't parsed");
+                        } else std::unreachable();
 
                         break;
                     default:
@@ -371,27 +375,31 @@ namespace Cardflash {
         int lstatus_byte_offset = 0;
 
         for (size_t i = 0; i < this->cards.size(); ++i) {
-            // 0 1 2 3 4 5 6 7      8 9 10 11 12 13 14 15
-            if (i % 8 == 0 && i != 0)
-                lstatus_byte_offset += 1;
             // Iter to the current byte
             auto lstatus_byte_iter = (lstatus_iter + lstatus_byte_offset);
 
-            // 00000000 >> 6 00000000 | 000000 11 / 10 / 01 << 6 **000000 offset: 0
-            // 11000000 >> 4 00110000 | 000000 11 / 10 / 01 << 4 11**0000 offset: 2
-            // 11110000 >> 2 00111100 | 000000 11 / 10 / 01 << 2 1111**00 offset: 4
-            // 11111100 >> 0 11111100 | 000000 11 / 10 / 01 << 0 111111** offset: 6
-            *lstatus_byte_iter = *lstatus_byte_iter >> (6-lstatus_bit_offset)
-                | static_cast<uint8_t>(this->cards[i].learning_status)
-                << (6-lstatus_bit_offset);
+            *lstatus_byte_iter |=
+                static_cast<uint8_t>(this->cards[i].learning_status)
+                << (6 - lstatus_bit_offset);
+
+            /* std::cout << std::format(
+            *     "Deser has gay things to announce:\tBitOffset: {}\t\
+            *     ByteOffset: {}\t",
+            *     lstatus_bit_offset,
+            *     lstatus_byte_offset
+            * ) << "Current byte: " << std::bitset<8>(*lstatus_byte_iter)
+            * << std::endl;
+            */
 
             lstatus_bit_offset += 2;
-            if (lstatus_bit_offset >= 8)
+            if (lstatus_bit_offset >= 8) {
                lstatus_bit_offset = 0;
+               ++lstatus_byte_offset;
+            }
 
             // Add the terminating \n after the learningstatus
+            // if we're at the last iteration
             if (i == this->cards.size() - 1)
-                //     else
                 *(lstatus_byte_iter + 1) = '\n';
 
 
@@ -479,10 +487,11 @@ namespace Cardflash {
             for (size_t i = 0; i < this->cards.size(); ++i) {
                 auto card = &this->cards[i];
                 buff.append(std::format(
-                    "\t{}. Front: {} -- Back: {}\n",
+                    "\t{}. Front: {} -- Back: {} -- LearningStatus: {}\n",
                     i,
                     card->GetFront(),
-                    card->GetBack()
+                    card->GetBack(),
+                    card->LearningStatusFmt()
                 ));
             }
         }

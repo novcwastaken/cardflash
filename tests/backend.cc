@@ -10,7 +10,9 @@ bool operator==(const Cardflash::Set& a, const Cardflash::Set& b) {
         a.title == b.title &&
         a.subject == b.subject &&
         a.IsSetFinalized() == b.IsSetFinalized() &&
-        a.GetRefCards().size() == b.GetRefCards().size();
+        a.GetRefCards().size() == b.GetRefCards().size() &&
+        a.connect_correct.size() == b.connect_correct.size() &&
+        a.learn_correct.size() == b.learn_correct.size();
 
     // If these parameters don't match the cards shouldn't be matched either
     if (!base) return base;
@@ -19,11 +21,23 @@ bool operator==(const Cardflash::Set& a, const Cardflash::Set& b) {
     auto cards_b = b.GetRefCards();
     for (size_t i = 0; i < cards_a.size(); ++i) {
         if (
-        cards_a[i].GetFront() != cards_b[i].GetFront() ||
-        cards_a[i].GetBack() != cards_b[i].GetBack() ||
-        cards_a[i].learning_status != cards_b[i].learning_status
+            cards_a[i].GetFront() != cards_b[i].GetFront() ||
+            cards_a[i].GetBack() != cards_b[i].GetBack() ||
+            cards_a[i].learning_status != cards_b[i].learning_status
         )
             return false;
+    }
+
+    for (size_t i = 0; i < a.connect_correct.size(); ++i) {
+        if (a.connect_correct[i] != b.connect_correct[i]) {
+            return false;
+        }
+    }
+
+    for (size_t i = 0; i < a.learn_correct.size(); ++i) {
+        if (a.learn_correct[i] != b.learn_correct[i]) {
+            return false;
+        }
     }
 
     return true;
@@ -33,8 +47,55 @@ TEST_CASE("(De)serialization of Set", "[serde]") {
     Cardflash::Set set("John Doe", "Cool Title", "Even cooler subject");
     set.Expand({
         Cardflash::Card("Front", "Back"),
-        Cardflash::Card("Cool Front", "Cool Back")
+        Cardflash::Card("Cool Front", "Cool Back"),
+        Cardflash::Card("Mrow", "Mrow(Back)", Cardflash::CardLearningStatus::Know),
+        Cardflash::Card(
+            "What year did ww2 end?",
+            "The year after the year before ww2 ended",
+            Cardflash::CardLearningStatus::Learning
+        ),
+        Cardflash::Card(
+            "Front (but cooler)",
+            "Back (even cooler)",
+            Cardflash::CardLearningStatus::Unknown
+        ),
+        Cardflash::Card("John", "Doe", Cardflash::CardLearningStatus::Know),
+        Cardflash::Card(
+            "Ran out of ideas",
+            "Ran out of ideas (but back)",
+            Cardflash::CardLearningStatus::Unknown
+        ),
+        Cardflash::Card(
+            "Love is in the air?",
+            "Wrong! Gas leak!",
+            Cardflash::CardLearningStatus::Learning
+        ),
+        Cardflash::Card(
+            "What year did ww2 end?",
+            "The year after the year before ww2 ended",
+            Cardflash::CardLearningStatus::Learning
+        ),
+        Cardflash::Card(
+            "Front (but cooler)",
+            "Back (even cooler)",
+            Cardflash::CardLearningStatus::Unknown
+        ),
+        Cardflash::Card("John", "Doe", Cardflash::CardLearningStatus::Know),
+        Cardflash::Card(
+            "Ran out of ideas",
+            "Ran out of ideas (but back)",
+            Cardflash::CardLearningStatus::Unknown
+        ),
+        Cardflash::Card(
+            "Love is in the air?",
+            "Wrong! Gas leak!",
+            Cardflash::CardLearningStatus::Learning
+        ),
     });
+
+    // Still doesn't work properly
+    // set.connect_correct.insert(set.connect_correct.end(), {1, 2, 3, 4, 5, 6, 7, 8, 10});
+    // set.learn_correct.insert(set.learn_correct.end(), {1, 2, 3, 4, 5, 6, 7, 8, 10});
 
     REQUIRE(set.IsSetFinalized());
 
