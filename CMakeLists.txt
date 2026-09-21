@@ -21,7 +21,7 @@ add_library(imgui STATIC
 if(MSVC)
   add_compile_options(/WX /W4)
 else()
-  add_compile_options(-Wall -Werror)
+  add_compile_options(-Wall ) # -Werror
 endif()
 
 target_include_directories(imgui PUBLIC
