@@ -3,11 +3,12 @@
 // #include <bitset>
 // #include <iostream>
 
+#include <iostream>
 #include <iterator>
 #include <cstdint>
 #include <format>
-#include <optional>
 #include <queue>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 
@@ -155,7 +156,7 @@ namespace Cardflash {
 
         // Header size is 13 bytes
         if (sizeof_title + sizeof_author + sizeof_subject + sizeof_learn_correct +
-            sizeof_connect_correct + sizeof_learning_status <= static_cast<uint16_t>(in.size()) - 13)
+            sizeof_connect_correct + sizeof_learning_status > static_cast<uint16_t>(in.size()) - 13)
             throw(DeserializationError("Data body too small"));
 
         // Advance iter to the first data byte
@@ -199,7 +200,6 @@ namespace Cardflash {
 
         // ==== Learning status ====
         std::vector<uint8_t> learning_status_bytes(iter, iter + sizeof_learning_status);
-        iter += sizeof_learning_status;
 
         std::queue<CardLearningStatus> learning_status_queue;
         bool learning_status_finalized = false;
@@ -231,177 +231,74 @@ namespace Cardflash {
 
         learning_status_bytes.clear();
 
+        // Advance iter after the learning status
+        iter += sizeof_learning_status;
 
+        // ==== CARDS ====
+        bool parsing_front = true;
 
+        std::string buff;
+        std::string front_buff;
 
+        auto last = in.end();
 
+        while (iter != last) {
+            uint8_t byte = *iter;
 
-        // DeserStage s = DeserStage::Title;
-        // std::vector<uint8_t> buff;
+            if (byte != '\n') {
+                buff += byte;
+            }  else {
+                if (parsing_front) {
+                    if (buff.length() == 0)
+                        throw(DeserializationError(
+                            "Missing a card's front size (field is empty)"
+                        ));
 
-        // std::optional<std::string> card_front_buffer = std::nullopt;
+                    front_buff = std::move(buff);
+                    parsing_front = false;
+                } else {
+                    // Shouldn't happen
+                    if (front_buff.length() == 0) {
+                        throw(std::runtime_error("UB while parsing cards"));
+                    }
 
-        // std::queue<CardLearningStatus> card_learning_status_q;
-        // bool learning_status_finalized_fake = false;
+                    if (buff.empty())
+                        throw(DeserializationError(
+                            "Missing a card's back field (field is empty)"
+                        ));
 
-        // for (size_t i = 0; i < in.size(); ++i) {
-        //     const char c = in[i];
+                    if (learning_status_queue.size() == 0)
+                        throw(DeserializationError(
+                            "More cards than learning status"
+                        ));
+                    auto learning_status = learning_status_queue.front();
 
-        //     if (c == '\n') {
-        //         // std::cout << "State: " << s << " Buff: " << buff << std::endl;
+                    this->Expand(
+                        Card(
+                            std::move(front_buff),
+                            std::move(buff),
+                            learning_status
+                        )
+                    );
 
-        //         switch (s) {
-        //             case DeserStage::Author:
-        //                 if (buff.empty())
-        //                     throw(DeserializationError(
-        //                         "Missing author field (field is empty)"
-        //                     ));
-        //                 this->author = std::string(buff.begin(), buff.end());
-        //                 buff.clear();
+                    front_buff.clear();
+                    buff.clear();
 
-        //                 break;
-        //             case DeserStage::Title:
-        //                 if (buff.empty())
-        //                     throw(DeserializationError(
-        //                         "Missing title field (field is empty)"
-        //                     ));
-        //                 this->title = std::string(buff.begin(), buff.end());
-        //                 buff.clear();
+                    learning_status_queue.pop();
+                    parsing_front = true;
+                }
+            }
 
-        //                 break;
-        //             case DeserStage::Subject:
-        //                 if (buff.empty()) this->subject = "";
-        //                 else{
-        //                     this->subject = std::string(buff.begin(), buff.end());
-        //                     buff.clear();
-        //                 }
+            ++iter;
+        }
 
-        //                 break;
-        //             case DeserStage::LearnCorrect:
-        //                 if (buff.empty()) break;
+        if (!learning_status_queue.empty()) throw(DeserializationError(
+                "More card learning status than cards"
+            ));
 
-        //                 if (buff.size() % 2 != 0) throw(DeserializationError(
-        //                     "Learn statistic data is corrupted (odd number of bytes)"
-        //                 ));
-
-        //                 uint8_t learn_byte_buffer;
-        //                 for (size_t i = 0; i < buff.size(); i += 1) {
-        //                     if (i % 2 == 0) learn_byte_buffer = buff[i];
-        //                     else {
-        //                         uint8_t bytes[2] = {learn_byte_buffer, buff[i]};
-        //                         this->learn_correct.insert(
-        //                             this->learn_correct.end(),
-        //                             LEBytesToU16(bytes)
-        //                         );
-        //                     }
-        //                 }
-
-        //                 buff.clear();
-
-        //                 break;
-        //             case DeserStage::ConnectCorrect:
-        //                 if (buff.empty()) break;
-
-        //                 if (buff.size() % 2 != 0) throw(DeserializationError(
-        //                     "Connect statistic data is corrupted (odd number of bytes)"
-        //                 ));
-
-        //                 uint8_t connect_byte_buffer;
-        //                 for (size_t i = 0; i < buff.size(); i += 1) {
-        //                     if (i % 2 == 0) connect_byte_buffer = buff[i];
-        //                     else {
-        //                         uint8_t bytes[2] = {connect_byte_buffer, buff[i]};
-        //                         this->connect_correct.insert(
-        //                             this->connect_correct.end(),
-        //                             LEBytesToU16(bytes)
-        //                         );
-        //                     }
-        //                 }
-
-        //                 buff.clear();
-
-        //                 break;
-        //             case DeserStage::LearningStatus:
-        //                 if (buff.empty()) break;
-
-        //                 // **000000 >> 6 | 00000011
-        //                 // 00**0000 >> 6 | 00000011
-        //                 for (const auto byte : buff) {
-        //                     // std::cout << "Lstatus Deser: byte: " << std::bitset<8>(byte) << std::endl;
-
-        //                     for (int8_t bit_offset = 6; bit_offset >= 0; bit_offset -= 2) {
-        //                         uint8_t raw = (byte >> (bit_offset)) & 0b00000011;
-
-        //                         if (raw != 0 && learning_status_finalized_fake)
-        //                             throw(DeserializationError(
-        //                                 "Invalid Learning Status byte:non padding\
-        //                                     byte after the first padding byte!"
-        //                             ));
-        //                         else if (raw != 0){
-        //                             card_learning_status_q
-        //                                 .push(static_cast<CardLearningStatus>(raw));
-
-        //                             // std::cout
-        //                             //     << "Pushing Lstatus Deser: bit offset: "
-        //                             //     << (int)bit_offset << "\tpushed: "
-        //                             //     << std::bitset<2>(raw) << std::endl;
-        //                         }
-        //                         else
-        //                             learning_status_finalized_fake = true;
-        //                     }
-        //                 }
-
-        //                 buff.clear();
-
-        //                 break;
-        //             case DeserStage::CardFront:
-        //                 if (buff.empty())
-        //                     throw(DeserializationError(
-        //                         "Missing a card's front field (field is empty)"
-        //                     ));
-
-        //                 card_front_buffer = std::string(buff.begin(), buff.end());
-        //                 buff.clear();
-
-        //                 break;
-        //             case DeserStage::CardBack:
-        //                 if (buff.empty())
-        //                     throw(DeserializationError(
-        //                         "Missing a card's back field (field is empty)"
-        //                     ));
-
-        //                 if (card_front_buffer) {
-        //                     if (card_learning_status_q.empty())
-        //                         throw(DeserializationError(
-        //                             "Less provided learning status bits than learning cards"
-        //                         ));
-
-        //                     auto learning_status = card_learning_status_q.front();
-
-        //                     this->Expand(
-        //                         Card(
-        //                             std::move(card_front_buffer.value()),
-        //                             std::string(buff.begin(), buff.end()),
-        //                             learning_status
-        //                         )
-        //                     );
-        //                     card_front_buffer = std::nullopt;
-
-        //                     card_learning_status_q.pop();
-        //                     buff.clear();
-        //                 } else std::unreachable();
-
-        //                 break;
-        //             default:
-        //                 std::unreachable();
-        //         }
-
-        //         // Move forward, or if at the end of the modes, go back one
-        //         s = static_cast<DeserStage>((s == DeserStage::CardBack) ? s - 1 : s + 1);
-        //     } else {
-        //         buff.push_back(c);
-        //     }
-        // }
+        if (!front_buff.empty()) throw(DeserializationError(
+            "The last card had no back (corrupted data)"
+        ));
     }
 
     // ====================================================================

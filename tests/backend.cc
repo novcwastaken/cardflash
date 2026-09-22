@@ -44,7 +44,7 @@ bool operator==(const Cardflash::Set& a, const Cardflash::Set& b) {
     return true;
 }
 
-#define SINGLE_SECTION_MODE
+// #define SINGLE_SECTION_MODE
 
 TEST_CASE("(De)serialization of Set", "[serde]") {
     Cardflash::Set set("John Doe", "Cool Title", "Even cooler subject");
@@ -97,8 +97,8 @@ TEST_CASE("(De)serialization of Set", "[serde]") {
     });
 
     // Still doesn't work properly
+    set.learn_correct.insert(set.learn_correct.end(), {1, 2, 3, 4, 5, 6, 7, 8, 10});
     set.connect_correct.insert(set.connect_correct.end(), {1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
-    // set.learn_correct.insert(set.learn_correct.end(), {1, 2, 3, 4, 5, 6, 7, 8, 10});
 
     REQUIRE(set.IsSetFinalized());
 
