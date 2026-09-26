@@ -114,16 +114,28 @@ namespace Cardflash {
             ///     SetNotFinalized if the set is not finalized!
             ///
             /// Serialized representation:
-            /// AUTHOR\n
-            /// TITLE\n
-            /// SUBJECT\n
-            /// little endia array of bytes:  LEARN_CORRECT\n
-            /// little endia array of bytes:  CONNECT_CORRECT\n
-            /// array of bytes*: CARD[n].learningstatus\n
-            /// CARD[n].FRONT \n CARD[n].BACK \n
-            /// CARD[n].FRONT \n CARD[n].BACK \n
             ///
-            /// *: 1 byte stores 4 cards' learning status (left -> right = [0] -> [n]):
+            /// Header (each value is u16 unless stated otherwise):
+            ///     SizeOf(Title)
+            ///     SizeOf(Author)
+            ///     SizeOf(Subject)
+            ///     SizeOf(LearnCorrect)
+            ///     SizeOf(ConnectCorrect)
+            ///     SizeOf(LearningStatus)
+            ///     Learn- / ConnectCorrect size bitflag: 0x1 | 0x2
+            ///         (if set the indicated set only uses u8, if not u16)
+            /// Content:
+            ///     u8 array (text): Title
+            ///     u8 array (text): Author
+            ///     u8 array (text): Subject
+            ///     u8/16 (see header) array (binary vector): Learn Correct
+            ///     u8/16 (see header) array (binary vector): Connect Correct
+            ///     Bitfield array (see later): Learning Status
+            ///     Card[N].Front   (string) + \n
+            ///     Card[N].Back    (string) + \n
+            ///
+            /// Learning Status bitfield array:
+            /// 1 byte stores 4 cards' learning status (left -> right = [0] -> [n]):
             ///     11: Unknown
             ///     10: Known
             ///     01: Still learning
