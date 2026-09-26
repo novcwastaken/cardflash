@@ -1,4 +1,3 @@
-#include <iostream>
 #define CATCH_CONFIG_MAIN
 #include <catch2/catch_test_macros.hpp>
 
@@ -44,7 +43,10 @@ bool operator==(const Cardflash::Set& a, const Cardflash::Set& b) {
     return true;
 }
 
-// #define SINGLE_SECTION_MODE
+#define SERDE_TEST true
+#define SERDE_NO_SUBJECT true
+#define SERDE_NO_CARDS true
+#define SERDE_U16_STATISTIC true
 
 TEST_CASE("(De)serialization of Set", "[serde]") {
     Cardflash::Set set("John Doe", "Cool Title", "Even cooler subject");
@@ -102,6 +104,7 @@ TEST_CASE("(De)serialization of Set", "[serde]") {
 
     REQUIRE(set.IsSetFinalized());
 
+#if SERDE_TEST
     SECTION("Serde test") {
         auto ser = set.Serialize();
         Cardflash::Set deser(ser);
@@ -111,8 +114,9 @@ TEST_CASE("(De)serialization of Set", "[serde]") {
 
         REQUIRE((set == deser));
     }
+#endif
 
-#ifndef SINGLE_SECTION_MODE
+#if SERDE_NO_SUBJECT
     SECTION("Serde test: no subject") {
         set.subject = "";
 
@@ -124,13 +128,29 @@ TEST_CASE("(De)serialization of Set", "[serde]") {
 
         REQUIRE((set == deser));
     }
+#endif
 
-
+#if SERDE_NO_CARDS
     SECTION("Serde test: no cards") {
         set.cards.clear();
         set.are_cards_ready = false;
 
         REQUIRE_THROWS_AS(set.Serialize(), Cardflash::SetNotFinalized);
+    }
+#endif
+
+#if SERDE_U16_STATISTIC
+    SECTION("Serde test: u16 statistic") {
+        set.connect_correct.push_back(300);
+        set.learn_correct.push_back(300);
+
+        auto ser = set.Serialize();
+        Cardflash::Set deser(ser);
+
+        // std::cout << "Set: " << set.DebugFmt() <<
+        //     "Deserialized: " << deser.DebugFmt() << std::endl;
+
+        REQUIRE((set == deser));
     }
 #endif
 }

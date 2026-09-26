@@ -1,9 +1,5 @@
 #include "backend.hh"
 
-// #include <bitset>
-// #include <iostream>
-
-#include <iostream>
 #include <iterator>
 #include <cstdint>
 #include <format>
@@ -182,7 +178,10 @@ namespace Cardflash {
                 this->learn_correct.push_back(*(iter + i));
             } else {
                 this->learn_correct.reserve(sizeof_learn_correct);
-                this->learn_correct.push_back(LEBytesToU16(iter + (i * 2)));
+                this->learn_correct.push_back(LEBytesToU16(iter + i));
+                // Advance i because in this case we use 2
+                // bytes / iteration
+                ++i;
             }
         }
         iter += sizeof_learn_correct;
@@ -193,7 +192,10 @@ namespace Cardflash {
                 this->connect_correct.push_back(*(iter + i));
             } else {
                 this->connect_correct.reserve(sizeof_connect_correct);
-                this->connect_correct.push_back(LEBytesToU16(iter + (i * 2)));
+                this->connect_correct.push_back(LEBytesToU16(iter + i));
+                // Advance i because in this case we use 2
+                // bytes / iteration
+                ++i;
             }
         }
         iter += sizeof_connect_correct;
@@ -543,6 +545,33 @@ namespace Cardflash {
                     card->LearningStatusFmt()
                 ));
             }
+            buff.push_back('\n');
+        }
+
+        buff.append("\tConnect Correct: ");
+
+        if (this->connect_correct.empty()) {
+            buff.append("EMPTY\n");
+        } else {
+            buff.append("{ ");
+            for (const auto element : this->connect_correct) {
+                buff.append(std::format("{} ", element));
+            }
+            buff.push_back('}');
+            buff.push_back('\n');
+        }
+
+        buff.append("\tLearn Correct: ");
+
+        if (this->learn_correct.empty()) {
+            buff.append("EMPTY\n");
+        } else {
+            buff.append("{ ");
+            for (const auto element : this->learn_correct) {
+                buff.append(std::format("{} ", element));
+            }
+            buff.push_back('}');
+            buff.push_back('\n');
         }
 
         return buff;
