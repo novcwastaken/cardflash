@@ -23,6 +23,8 @@ namespace CardflashUI {
 
     void UiState::Render(int w, int h, GLFWwindow* window) {
         float top_bar_height = this->TopBar(window);
-        CardflashUI::MainMenu(w, h, top_bar_height);
+        //CardflashUI::MainMenu(w, h, top_bar_height);
+
+        CardflashUI::Editor(w, h, top_bar_height);
     }
 }

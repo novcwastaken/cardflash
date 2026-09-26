@@ -21,19 +21,18 @@ namespace CardflashUI {
         if (ImGui::Button("Import")) {}
 
         // Recents
-        if (ImGui::BeginTable("main_menu_recents_table", 6)) {
+        if (ImGui::BeginTable("main_menu_recents_table", 5)) {
             // Header
             ImGui::TableSetupColumn("Name");
             ImGui::TableSetupColumn("Author");
             ImGui::TableSetupColumn("Subject");
             ImGui::TableSetupColumn("Questions");
             ImGui::TableSetupColumn("Last opened");
-            ImGui::TableSetupColumn("Path");
 
             ImGui::TableHeadersRow();
 
             // Rows
-            CardflashUI::PlaceholderRecentSetTableRow("Hitler Nigger", "Günter", "History", 20, "2026/04/12", "/home/femlonkai/homework/sextapes/history");
+            CardflashUI::PlaceholderRecentSetTableRow("Hitler Nigger", "Günter", "History", 20, "2026/04/12");
 
             ImGui::EndTable();
         }
@@ -41,7 +40,7 @@ namespace CardflashUI {
         ImGui::End();
     }
 
-    void PlaceholderRecentSetTableRow(std::string name, std::string author, std::string subject, int questions, std::string last_opened, std::string path) {
+    void PlaceholderRecentSetTableRow(std::string name, std::string author, std::string subject, int questions, std::string last_opened) {
         ImGui::TableNextRow();
 
         ImGui::TableNextColumn();
@@ -58,8 +57,5 @@ namespace CardflashUI {
 
         ImGui::TableNextColumn();
         ImGui::Text("%s", last_opened.c_str());
-
-        ImGui::TableNextColumn();
-        ImGui::Text("%s", path.c_str());
     }
 }
