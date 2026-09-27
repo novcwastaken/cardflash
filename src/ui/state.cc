@@ -1,7 +1,7 @@
 // The state of the UI
 
+// #include "backend/backend.hh"
 #include "state.hh"
-#include "ui/screens/screens.hh"
 
 namespace CardflashUI {
     /// Possible states of the main window
@@ -23,8 +23,8 @@ namespace CardflashUI {
 
     void UiState::Render(int w, int h, GLFWwindow* window) {
         float top_bar_height = this->TopBar(window);
-        //CardflashUI::MainMenu(w, h, top_bar_height);
+        this->MainMenu(w, h, top_bar_height);
 
-        CardflashUI::Editor(w, h, top_bar_height);
+        // CardflashUI::Editor(w, h, top_bar_height);
     }
 }

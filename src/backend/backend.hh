@@ -1,4 +1,5 @@
 #pragma once
+#include <atomic>
 #ifndef __BACKEND_HPP_GUARD__
 #define __BACKEND_HPP_GUARD__
 
@@ -23,6 +24,12 @@ namespace Cardflash {
     class SetNotFinalized : public std::runtime_error {
         public:
             explicit SetNotFinalized(const std::string& msg)
+                : std::runtime_error(msg) {}
+    };
+
+    class SingletonAlreadyInited : public std::runtime_error {
+        public:
+            explicit SingletonAlreadyInited(const std::string& msg)
                 : std::runtime_error(msg) {}
     };
 
@@ -146,6 +153,66 @@ namespace Cardflash {
 
             /// Returns a debug string
             inline const std::string DebugFmt() const;
+    };
+
+    enum class BufferState : short {
+        /// A worker may be dispatched, the buffer is empty
+        Empty,
+        /// A worker is currently dispatched, modifying the
+        /// buffer may lead to UB!
+        Working,
+        /// The worker finished working, and the buffer is
+        /// ready to be consumed.
+        Ready,
+        /// The worker finished working, but something went wrong.
+        /// The buffer shouldn't be read!
+        Failed
+    };
+
+    /// A singleton object responsible for managing sets.
+    class SetManager {
+        std::vector<Set> sets;
+
+        // An atomic buffer mechanism for Scan to be able
+        // to read the directory and produce an update set
+        // array.
+        std::atomic<BufferState> buffer_state {BufferState::Empty};
+        std::vector<Set> buffer;
+        bool did_scan_fail { false };
+
+        public:
+            /// Throws SingletonAlreadyInited if SetManager
+            /// was already instantiated
+            SetManager();
+
+            /// Scans the storage directory for new sets.
+            /// No other method will run if a scan is running,
+            /// but it'll run in the background in another thread.
+            void Scan();
+
+            /// Search through the sets and return a list of results.
+            ///
+            /// Special attributes are accepted:
+            ///     @title / @t             searches through titles
+            ///     @author / @from / @a    searches authors
+            ///     @subject / @s           searches through subjects
+            ///     @card                   searches through all cards (only done by this flag, not by default)
+            void Search(std::string query);
+
+            /// Try to import a card located at path
+            void Import(std::string path);
+
+            /// Opens a file dialog for the user to chose where to save a set
+            void Export(const Set& set);
+
+            /// Gets an immutable pointer to the Set.
+            /// Should be dropped after every frame, and a new
+            /// ref be acquired at the start of the frame!
+            const std::vector<Set>* GetSetsRef();
+
+            bool DidScanFail();
+
+
     };
 }
 

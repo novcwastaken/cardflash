@@ -1,10 +1,14 @@
-#include <string>
+#include "../state.hh"
+
 #include "imgui.h"
 #include "screens.hh"
 
+#include <iostream>
+#include <string>
+
 namespace CardflashUI {
     /// The main menu (wow)
-    void MainMenu(int window_width, int window_height, int top_bar_height) {
+    void UiState::MainMenu(int window_width, int window_height, int top_bar_height) {
         ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
 
         ImGui::SetNextWindowPos(ImVec2(0, top_bar_height)); // Magic number
@@ -19,6 +23,16 @@ namespace CardflashUI {
         if (ImGui::Button("Open")) {}
         ImGui::SameLine();
         if (ImGui::Button("Import")) {}
+        ImGui::SameLine();
+
+        if (ImGui::Button(
+            this->set_manager.DidScanFail()
+                ? "Refresh failed!"
+                : "Refresh"
+        )) {
+            std::cout << "Scanning set manager!" << std::endl;
+            this->set_manager.Scan();
+        }
 
         // Recents
         if (ImGui::BeginTable("main_menu_recents_table", 5)) {

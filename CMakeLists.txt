@@ -29,13 +29,16 @@ target_include_directories(imgui PUBLIC
   ${IMGUI_DIR}/backends
 )
 
+add_subdirectory(external/SDL EXCLUDE_FROM_ALL)
+
+
 target_link_libraries(imgui PUBLIC glfw OpenGL::GL)
 
 file(GLOB_RECURSE CARDFLASH_SOURCES CONFIGURE_DEPENDS src/*.cc)
 add_executable(Cardflash ${CARDFLASH_SOURCES})
 target_include_directories(Cardflash PRIVATE src)
 target_link_libraries(Cardflash PRIVATE imgui)
-
+target_link_libraries(Cardflash PRIVATE SDL3::SDL3)
 
 
 
