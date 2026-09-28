@@ -14,13 +14,16 @@
 #include <iostream>
 #include <stdexcept>
 #include <vector>
+#include <map>
 
 namespace Cardflash {
+    #ifndef CARDFLASH_SET_MANAGER_DEBUG
     static bool is_set_manager_inited = false;
+    #endif
 
     // Class SetManager
     SetManager::SetManager() {
-        #ifndef SET_MANAGER_DEBUG
+        #ifndef CARDFLASH_SET_MANAGER_DEBUG
         if (is_set_manager_inited) throw(SingletonAlreadyInited(
             "Tried to instantiate SetManager singleton, but the it was already instantiated!"
         ));
@@ -59,36 +62,70 @@ namespace Cardflash {
     }
 
     const std::vector<Set>& SetManager::GetSetsRef() {
+        if (!this->AllSetRefsReturned()) throw(NotAllRefsReturned(
+            "Tried to get a Sets reference while still borrowing individual Sets!"
+        ));
+
         this->CheckBufferState();
         return this->sets;
     }
 
     Set& SetManager::GetSet(size_t index) {
-        if (index >= this->sets.size()) throw (std::out_of_range(
+        if (index > this->sets.size()) throw (std::out_of_range(
             "GetSet: index is out of the range of the Set array!"
         ));
 
         if (this->IsScanning()) throw (ScanRunning());
 
         this->DisableBuffer();
-        this->refcount.push_back(&this->sets[index]);
+
+        Set* ref = &this->sets[index];
+        try {
+            (this->refcount.at(ref))++;
+        } catch (const std::out_of_range& _) {
+            this->refcount.insert( {ref, 1} );
+        }
 
         return this->sets[index];
     }
 
     void SetManager::DropSetRef(Set &set) {
-        for (size_t i = 0; i < this->refcount.size(); ++i) {
-            if (this->refcount[i] == &set) {
-                this->refcount.erase(this->refcount.begin() + i);
-                return;
+        try {
+            size_t ref = this->refcount.at(&set);
+            if (ref - 1 == 0) {
+                this->refcount.erase(&set);
+
+                if (this->refcount.empty()) {
+                    this->buffer.clear();
+                    this->buffer_state.store(BufferState::Empty);
+                }
+            } else {
+                --this->refcount[&set];
             }
+        } catch (const std::out_of_range& _) {
+            throw(std::runtime_error(
+                "Dropped a SetRef that wasn't borrowed!"
+            ));
         }
-        throw(std::runtime_error("Dropped a SetRef that wasn't borrowed!"));
+    }
+
+    bool SetManager::AllSetRefsReturned() const {
+        return this->refcount.empty();
     }
 
     bool SetManager::DidScanFail() {
         this->CheckBufferState();
         return this->did_scan_fail;
+    }
+
+    bool SetManager::IsScanning() {
+        auto result = this->CheckBufferState();
+        return result == BufferState::Working;
+    }
+
+    bool SetManager::IsScanDisabled() {
+        auto result = this->CheckBufferState();
+        return result == BufferState::Disabled;
     }
 
     void SetManager::Save(Set &set) {
@@ -103,10 +140,9 @@ namespace Cardflash {
             "Failed to allocate memory for the name of the set to be saved!"
         ));
 
-        char uuid_str[36]; // No nullterm
-        set.GetUUID().bytes(uuid_str);
+        std::string uuid_str = set.GetUUID().str();
 
-        memcpy(filepath + user_path_size, uuid_str, 36);
+        memcpy(filepath + user_path_size, &uuid_str[0], 36);
         memcpy(filepath + user_path_size + 36, ".cardflash", 11);
 
         SDL_IOStream *file = SDL_IOFromFile(filepath, "wb");
@@ -122,6 +158,16 @@ namespace Cardflash {
         SDL_CloseIO(file);
 
         // Profit :+1:
+    }
+
+    void SetManager::AddSet(Set set) {
+        if (this->IsScanning()) throw(ScanRunning());
+        if (!this->AllSetRefsReturned()) throw(NotAllRefsReturned(
+            "Tried to add set while some reference is not returned!"
+        ));
+
+        this->sets.push_back(set);
+        this->Save(this->sets[this->sets.size() - 1]);
     }
 
     //  Scanning
@@ -168,7 +214,7 @@ namespace Cardflash {
     int SDLCALL ScanWorkerThread(void *ptr) {
         ScanThreadData *data = reinterpret_cast<ScanThreadData*>(ptr);
         try {
-            std::cout << "Scan worker thread spawned!" << std::endl;
+            // std::cout << "Scan worker thread spawned!" << std::endl;
 
             SDL_AsyncIOQueue *ioqueue = SDL_CreateAsyncIOQueue();
             if (!ioqueue) {
@@ -260,14 +306,14 @@ namespace Cardflash {
 
         delete data;
 
-        std::cout << "Scan worker thread dead!" << std::endl;
+        // std::cout << "Scan worker thread dead!" << std::endl;
         return 0;
     }
 
     void SetManager::Scan() {
         BufferState state = this->buffer_state.load();
 
-        std::cout << "Scan: state: " << (short)state << std::endl;
+        // std::cout << "Scan: state: " << (short)state << std::endl;
 
         switch (state) {
             case BufferState::Ready:
@@ -283,6 +329,7 @@ namespace Cardflash {
                 this->buffer.clear();
                 break;
             case BufferState::Disabled:
+                // std::cout << "Called Scan while being disabled!" << std::endl;
             case BufferState::Working:
                 return;
         }

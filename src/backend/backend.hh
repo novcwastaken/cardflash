@@ -1,4 +1,5 @@
 #pragma once
+#include <map>
 #ifndef __BACKEND_HPP_GUARD__
 #define __BACKEND_HPP_GUARD__
 
@@ -206,11 +207,15 @@ namespace Cardflash {
         std::vector<Set> buffer;
         bool did_scan_fail { false };
 
+        /// Stores pointers "handed out" by GetSet
+        std::map<Set*, size_t> refcount;
 
-        std::vector<Set*> refcount;
+        /// Returns true if all the references are returned (refcount is empty)
+        bool AllSetRefsReturned() const;
 
         BufferState CheckBufferState();
         void DisableBuffer();
+
 
         public:
             /// Throws SingletonAlreadyInited if SetManager
@@ -228,6 +233,9 @@ namespace Cardflash {
 
             /// Returns whether a scan is in progress.
             bool IsScanning();
+
+            /// Returns whether scanning is currently disabled!
+            bool IsScanDisabled();
 
             /// Gets an immutable pointer to the Sets.
             /// Should be dropped after every frame, and a new
@@ -267,6 +275,10 @@ namespace Cardflash {
             void Save(Set &set);
 
 
+            /// Adds a set to the set collection / saves it.
+            ///
+            /// Throws ScanRunning if ScanRunning() is true!
+            void AddSet(Set set);
 
             /// Search through the sets and return a list of results.
             ///

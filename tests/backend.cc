@@ -99,7 +99,6 @@ TEST_CASE("(De)serialization of Set", "[serde]") {
         ),
     });
 
-    // Still doesn't work properly
     set.learn_correct.insert(set.learn_correct.end(), {1, 2, 3, 4, 5, 6, 7, 8, 10});
     set.connect_correct.insert(set.connect_correct.end(), {1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
 

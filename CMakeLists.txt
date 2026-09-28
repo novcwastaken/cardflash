@@ -58,6 +58,7 @@ file(GLOB_RECURSE TEST_SRCS CONFIGURE_DEPENDS tests/*.cc)
 add_executable(tests ${TEST_SRCS})
 target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
 target_link_libraries(tests PRIVATE uuid_v4::uuid_v4)
+target_link_libraries(tests PRIVATE SDL3::SDL3)
 
 include(Catch)  # from Catch2 3.x, wait — see note below
 catch_discover_tests(tests)
