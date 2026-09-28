@@ -30,16 +30,17 @@ target_include_directories(imgui PUBLIC
 )
 
 add_subdirectory(external/SDL EXCLUDE_FROM_ALL)
-
+add_subdirectory(external/UUID4 EXCLUDE_FROM_ALL)
 
 target_link_libraries(imgui PUBLIC glfw OpenGL::GL)
 
 file(GLOB_RECURSE CARDFLASH_SOURCES CONFIGURE_DEPENDS src/*.cc)
 add_executable(Cardflash ${CARDFLASH_SOURCES})
 target_include_directories(Cardflash PRIVATE src)
+
 target_link_libraries(Cardflash PRIVATE imgui)
 target_link_libraries(Cardflash PRIVATE SDL3::SDL3)
-
+target_link_libraries(Cardflash PRIVATE uuid_v4::uuid_v4)
 
 
 
@@ -56,6 +57,7 @@ enable_testing()
 file(GLOB_RECURSE TEST_SRCS CONFIGURE_DEPENDS tests/*.cc)
 add_executable(tests ${TEST_SRCS})
 target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
+target_link_libraries(tests PRIVATE uuid_v4::uuid_v4)
 
 include(Catch)  # from Catch2 3.x, wait — see note below
 catch_discover_tests(tests)

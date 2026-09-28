@@ -7,3 +7,6 @@
 	url = https://github.com/libsdl-org/SDL.git
 	branch = release-3.4.16
 
+[submodule "external/UUID4"]
+	path = external/UUID4
+	url = https://github.com/crashoz/uuid_v4.git

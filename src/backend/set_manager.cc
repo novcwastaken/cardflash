@@ -1,3 +1,5 @@
+#include "SDL3/SDL_iostream.h"
+#include "SDL3/SDL_stdinc.h"
 #include "backend.hh"
 
 #include "SDL3/SDL_filesystem.h"
@@ -10,6 +12,7 @@
 #include <cstring>
 #include <exception>
 #include <iostream>
+#include <stdexcept>
 #include <vector>
 
 namespace Cardflash {
@@ -26,42 +29,102 @@ namespace Cardflash {
         #endif // SET_MANAGER_DEBUG
     }
 
-    const std::vector<Set>* SetManager::GetSetsRef() {
-        BufferState state = this->buffer_state.load();
+    BufferState SetManager::CheckBufferState() {
+        auto state = this->buffer_state.load();
 
-        if (state == BufferState::Failed) {
-            this->did_scan_fail = true;
-            this->buffer.clear();
-
-            state = BufferState::Empty;
-        } else if (state == BufferState::Ready) {
+        if (state == BufferState::Ready) {
             this->sets = std::move(this->buffer);
             this->buffer.clear();
 
-            this->did_scan_fail = false;
+            this->buffer_state.store(BufferState::Empty);
+        } else if (state == BufferState::Failed) {
+            this->buffer.clear();
+            this->did_scan_fail = true;
+
+            this->buffer_state.store(BufferState::Empty);
         }
 
-        return &(this->sets);
+        return state;
+    }
+
+    void SetManager::DisableBuffer() {
+        auto state = CheckBufferState();
+
+        if (state == BufferState::Working)
+            throw(std::runtime_error(
+                "Tried to disable buffer while the scan was running"
+            ));
+
+        this->buffer_state.store(BufferState::Disabled);
+    }
+
+    const std::vector<Set>& SetManager::GetSetsRef() {
+        this->CheckBufferState();
+        return this->sets;
+    }
+
+    Set& SetManager::GetSet(size_t index) {
+        if (index >= this->sets.size()) throw (std::out_of_range(
+            "GetSet: index is out of the range of the Set array!"
+        ));
+
+        if (this->IsScanning()) throw (ScanRunning());
+
+        this->DisableBuffer();
+        this->refcount.push_back(&this->sets[index]);
+
+        return this->sets[index];
+    }
+
+    void SetManager::DropSetRef(Set &set) {
+        for (size_t i = 0; i < this->refcount.size(); ++i) {
+            if (this->refcount[i] == &set) {
+                this->refcount.erase(this->refcount.begin() + i);
+                return;
+            }
+        }
+        throw(std::runtime_error("Dropped a SetRef that wasn't borrowed!"));
     }
 
     bool SetManager::DidScanFail() {
-        BufferState state = this->buffer_state.load();
-
-        if (state == BufferState::Failed) {
-            this->did_scan_fail = true;
-            this->buffer.clear();
-
-            state = BufferState::Empty;
-        } else if (state == BufferState::Ready) {
-            this->sets = std::move(this->buffer);
-            this->buffer.clear();
-
-            this->did_scan_fail = false;
-        }
-
+        this->CheckBufferState();
         return this->did_scan_fail;
     }
 
+    void SetManager::Save(Set &set) {
+        // Open <SET.UUID>.cardflash
+        char *userpath = SDL_GetPrefPath(NULL, "cardflash");
+
+        size_t user_path_size = strlen(userpath);
+
+        // Realloc so original path + 36 (uuid string) + 10 (.cardflash) + 1 (nullterm)
+        char *filepath = (char*)SDL_realloc(userpath, user_path_size + 36 + 10 + 1);
+        if (!filepath) throw (std::runtime_error(
+            "Failed to allocate memory for the name of the set to be saved!"
+        ));
+
+        char uuid_str[36]; // No nullterm
+        set.GetUUID().bytes(uuid_str);
+
+        memcpy(filepath + user_path_size, uuid_str, 36);
+        memcpy(filepath + user_path_size + 36, ".cardflash", 11);
+
+        SDL_IOStream *file = SDL_IOFromFile(filepath, "wb");
+        SDL_free(filepath);
+
+        // Run serialize
+        std::vector<uint8_t> serialized = set.Serialize();
+
+        // Write data into file
+        SDL_WriteIO(file, &serialized.front(), serialized.size());
+
+        // Close file
+        SDL_CloseIO(file);
+
+        // Profit :+1:
+    }
+
+    //  Scanning
     struct ScanThreadData {
         std::atomic<BufferState>* buffer_state;
         std::vector<Set>* buffer;
@@ -75,8 +138,8 @@ namespace Cardflash {
     SDL_EnumerationResult DirectoryCallback (void *userdata, const char *dirname, const char *fname) {
         DirectoryCallbackUData *data = reinterpret_cast<DirectoryCallbackUData*>(userdata);
 
-        std::cout << "Directory callback: dirname: " << dirname
-            << " fname: " << fname << std::endl;
+        // std::cout << "Directory callback: dirname: " << dirname
+        //     << " fname: " << fname << std::endl;
 
         const char *dot { strrchr(fname, '.') };
         if (dot && strcmp(dot, "cardflash")) {
@@ -87,8 +150,8 @@ namespace Cardflash {
             strcpy(path, dirname);
             strcat(path, fname);
 
-            // This will open / read the file into a buffer that is
-            // allocted internally
+            // This will open / read queue the file to be read
+            // Self allocates buffer!
             bool success = SDL_LoadFileAsync(path, data->queue, NULL);
             free(path);
 
@@ -165,9 +228,10 @@ namespace Cardflash {
                 }
 
                 uint8_t *buff = reinterpret_cast<uint8_t*>(outcome.buffer);
-                Uint64 size = outcome.bytes_transferred;
+                size_t size = static_cast<size_t>(outcome.bytes_transferred);
 
                 std::vector<uint8_t> vec (buff, buff + size);
+                SDL_free(buff);
 
                 try {
                     data->buffer->push_back(Set(vec));
@@ -201,8 +265,7 @@ namespace Cardflash {
     }
 
     void SetManager::Scan() {
-        BufferState state = this->buffer_state
-            .exchange(BufferState::Working);
+        BufferState state = this->buffer_state.load();
 
         std::cout << "Scan: state: " << (short)state << std::endl;
 
@@ -216,13 +279,15 @@ namespace Cardflash {
             case BufferState::Failed:
                 this->buffer.clear();
                 break;
-            case BufferState::Working:
-                return;
             case BufferState::Empty:
                 this->buffer.clear();
                 break;
+            case BufferState::Disabled:
+            case BufferState::Working:
+                return;
         }
 
+        this->buffer_state.store(BufferState::Working);
         this->did_scan_fail = false;
 
         ScanThreadData *data = new ScanThreadData{
@@ -235,5 +300,6 @@ namespace Cardflash {
             reinterpret_cast<void*>(data)
         );
     }
+    //  !Scanning
     // end class SetManager
 }

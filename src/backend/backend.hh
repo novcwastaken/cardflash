@@ -1,8 +1,10 @@
 #pragma once
-#include <atomic>
 #ifndef __BACKEND_HPP_GUARD__
 #define __BACKEND_HPP_GUARD__
 
+#include "uuid_v4.h"
+
+#include <atomic>
 #include <string>
 #include <vector>
 #include <cstdint>
@@ -30,6 +32,20 @@ namespace Cardflash {
     class SingletonAlreadyInited : public std::runtime_error {
         public:
             explicit SingletonAlreadyInited(const std::string& msg)
+                : std::runtime_error(msg) {}
+    };
+
+    class ScanRunning : public std::runtime_error {
+        public:
+            explicit ScanRunning()
+                : std::runtime_error(
+                    "A scan was already started!"
+                ) {}
+    };
+
+    class NotAllRefsReturned : public std::runtime_error {
+        public:
+            explicit NotAllRefsReturned(const std::string& msg)
                 : std::runtime_error(msg) {}
     };
 
@@ -77,6 +93,8 @@ namespace Cardflash {
 
         std::vector<Card> cards;
 
+        UUIDv4::UUID uuid;
+
         #ifndef CARDFLASH_BACKEND_DEBUG
         public:
         #endif
@@ -98,23 +116,25 @@ namespace Cardflash {
             /// empty back or front.
             Set(std::vector<uint8_t>& serialized);
 
+            const UUIDv4::UUID& GetUUID() const;
+
             /// Returns whether the set is ready to be read (finalized).
             /// Calling GetRefCards while this is false will cause SetNotFinalized
             /// to be thrown!
-            inline const bool IsSetFinalized() const;
+            const bool IsSetFinalized() const;
 
-            inline const void Expand(Card with);
+            const void Expand(Card with);
 
-            inline const void Expand(std::vector<Card> with);
+            const void Expand(std::vector<Card> with);
 
-            inline const void Expand(std::vector<Card>& with);
+            const void Expand(std::vector<Card>& with);
 
             /// Returns a static reference to the internal card vector.
             /// Do not modify it!
             ///
             /// Throws SetNotFinalized if IsSetFinalized is false.
             /// To finalize a set call Expand at least once!
-            inline const std::vector<Card>& GetRefCards() const;
+            const std::vector<Card>& GetRefCards() const;
 
 
             /// Serializes the object into an array of bytes.
@@ -125,6 +145,7 @@ namespace Cardflash {
             /// Serialized representation:
             ///
             /// Header (each value is u16 unless stated otherwise):
+            ///     16bytes: UUID
             ///     SizeOf(Title)
             ///     SizeOf(Author)
             ///     SizeOf(Subject)
@@ -150,11 +171,11 @@ namespace Cardflash {
             ///     01: Still learning
             ///     00: Not occupied
             ///
-            /// Min size is 13!
+            /// Min size is 29 bytes!
             std::vector<uint8_t> Serialize();
 
             /// Returns a debug string
-            inline const std::string DebugFmt() const;
+            const std::string DebugFmt() const;
     };
 
     enum class BufferState : short {
@@ -168,7 +189,10 @@ namespace Cardflash {
         Ready,
         /// The worker finished working, but something went wrong.
         /// The buffer shouldn't be read!
-        Failed
+        Failed,
+        /// Disabled means no buffer activity may be done.
+        /// This should be set when the set should not change
+        Disabled
     };
 
     /// A singleton object responsible for managing sets.
@@ -182,15 +206,67 @@ namespace Cardflash {
         std::vector<Set> buffer;
         bool did_scan_fail { false };
 
+
+        std::vector<Set*> refcount;
+
+        BufferState CheckBufferState();
+        void DisableBuffer();
+
         public:
             /// Throws SingletonAlreadyInited if SetManager
             /// was already instantiated
             SetManager();
 
             /// Scans the storage directory for new sets.
-            /// No other method will run if a scan is running,
-            /// but it'll run in the background in another thread.
+            /// This might mutate the buffer, and thus may only be called
+            /// if there are no mutable refrences out there.
             void Scan();
+
+            /// Returns whether the last scan failed and
+            /// moves the buffer to the sets.
+            bool DidScanFail();
+
+            /// Returns whether a scan is in progress.
+            bool IsScanning();
+
+            /// Gets an immutable pointer to the Sets.
+            /// Should be dropped after every frame, and a new
+            /// ref be acquired at the start of the frame!
+            ///
+            /// Throws NotAllRefsReturned if not all references
+            /// acquired with GetSet is returned (see DropSetRef).
+            const std::vector<Set>& GetSetsRef();
+
+            /// Gets a mutable reference to a Set specified by the index
+            /// in the Sets. Disables starting a new scan until all the
+            /// references has been dropped (see DropRef()).
+            ///
+            /// Throws ScanRunning if a scan is running.
+            ///
+            /// Throws an std::out_of_range if the index is greater
+            /// than the number of stored sets.
+            ///
+            /// No ref by GetSetsRef should be active at the same time
+            /// a Set reference is live. This is not enforced, but all Sets
+            /// must be returned with DropSetRef before a new ref
+            /// to sets could be acquired!
+            Set& GetSet(size_t index);
+
+            /// Removes the internal reference counting of a Set.
+            ///
+            /// Explodes if a passed in ref wasn't borrowed (or was
+            ///     alrady dropped!)
+            ///
+            /// Using a reference after this is called is UB! (pls dont :3)
+            void DropSetRef(Set &set);
+
+            /// Saves a set after it has been modified.
+            ///
+            /// Don't forget to return the ref (with DropSetRef)
+            /// if you don't need a mutable reference anymore.
+            void Save(Set &set);
+
+
 
             /// Search through the sets and return a list of results.
             ///
@@ -198,7 +274,8 @@ namespace Cardflash {
             ///     @title / @t             searches through titles
             ///     @author / @from / @a    searches authors
             ///     @subject / @s           searches through subjects
-            ///     @card                   searches through all cards (only done by this flag, not by default)
+            ///     @card                   searches through all cards' content
+            ///         (only done by this flag, not by default)
             void Search(std::string query);
 
             /// Try to import a card located at path
@@ -206,15 +283,6 @@ namespace Cardflash {
 
             /// Opens a file dialog for the user to chose where to save a set
             void Export(const Set& set);
-
-            /// Gets an immutable pointer to the Set.
-            /// Should be dropped after every frame, and a new
-            /// ref be acquired at the start of the frame!
-            const std::vector<Set>* GetSetsRef();
-
-            bool DidScanFail();
-
-
     };
 }
 

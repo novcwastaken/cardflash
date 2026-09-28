@@ -12,7 +12,8 @@ bool operator==(const Cardflash::Set& a, const Cardflash::Set& b) {
         a.IsSetFinalized() == b.IsSetFinalized() &&
         a.GetRefCards().size() == b.GetRefCards().size() &&
         a.connect_correct.size() == b.connect_correct.size() &&
-        a.learn_correct.size() == b.learn_correct.size();
+        a.learn_correct.size() == b.learn_correct.size() &&
+        a.uuid == b.uuid;
 
     // If these parameters don't match the cards shouldn't be matched either
     if (!base) return base;
