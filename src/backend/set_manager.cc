@@ -1,4 +1,3 @@
-#include "SDL3/SDL_error.h"
 #include "backend.hh"
 
 #include "SDL3/SDL_filesystem.h"
@@ -9,6 +8,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <exception>
 #include <iostream>
 #include <vector>
 
@@ -104,98 +104,99 @@ namespace Cardflash {
 
     int SDLCALL ScanWorkerThread(void *ptr) {
         ScanThreadData *data = reinterpret_cast<ScanThreadData*>(ptr);
+        try {
+            std::cout << "Scan worker thread spawned!" << std::endl;
 
-        std::cout << "Worker thread spawned!" << std::endl;
-
-        SDL_AsyncIOQueue *ioqueue = SDL_CreateAsyncIOQueue();
-        if (!ioqueue) {
-            data->buffer_state->store(BufferState::Failed);
-            delete data;
-            return 0;
-        }
-
-        std::cout << "IOQUEUE" << std::endl;
-
-        char *userpath = SDL_GetPrefPath(NULL, "cardflash");
-        if (!userpath) {
-            data->buffer_state->store(BufferState::Failed);
-            delete data;
-            return 0;
-        }
-
-        uint32_t task_count = 0;
-        DirectoryCallbackUData *udata = new DirectoryCallbackUData {
-            .task_count = &task_count,
-            .queue = ioqueue
-        };
-
-        bool success = SDL_EnumerateDirectory(
-            userpath,
-            DirectoryCallback,
-            reinterpret_cast<void*>(udata)
-        );
-        std::cout << "ENUMERATED DIR? " << success
-            << " Count: " << task_count << std::endl;
-        if (!success) {
-            data->buffer_state->store(BufferState::Failed);
-            SDL_free(userpath);
-            delete data;
-            return 0;
-        }
-        SDL_free(userpath);
-
-        SDL_AsyncIOOutcome *outcome { NULL };
-        while (task_count > 0) {
-            while (!SDL_GetAsyncIOResult(ioqueue, outcome)) {}
-
-            // if (!SDL_WaitAsyncIOResult(ioqueue, outcome, -1)) {
-            //     continue;
-
-            //     data->buffer_state->store(BufferState::Failed);
-            //     delete data;
-            //     return 0;
-            // }
-            std::cout << "waited for result!" << std::endl;
-            --task_count;
-
-            std::cout << "Outcome is: " << outcome << std::endl;
-            if (!outcome) {
-
+            SDL_AsyncIOQueue *ioqueue = SDL_CreateAsyncIOQueue();
+            if (!ioqueue) {
                 data->buffer_state->store(BufferState::Failed);
                 delete data;
                 return 0;
             }
-            std::cout << "Outcome is: " << outcome << std::endl;
 
-            if (outcome->result == SDL_ASYNCIO_FAILURE) {
-                std::cout << "Failure while reading a file!" << std::endl;
-                continue;
+            // This returns a path to where it's safe / idiomatic on the
+            // given platform to write to. On linux this is something like
+            // ~/.local/share/cardflash on windows it's somewhere in appdata.
+            //
+            // Userpath must be freed!
+            char *userpath = SDL_GetPrefPath(NULL, "cardflash");
+            if (!userpath) {
+                data->buffer_state->store(BufferState::Failed);
+                delete data;
+                return 0;
             }
 
-            std::cout << "b reinterpret cast" << std::endl;
-            uint8_t *buff = reinterpret_cast<uint8_t*>(outcome->buffer);
-            Uint64 size = outcome->bytes_transferred;
-            std::cout << "size" << std::endl;
+            // The count to how much tasks are in the async io queue as
+            // that does not track such information (why would it)
+            uint32_t task_count = 0;
+            DirectoryCallbackUData *udata = new DirectoryCallbackUData {
+                .task_count = &task_count,
+                .queue = ioqueue
+            };
 
-            std::vector<uint8_t> vec (buff, buff + size);
-            std::cout << "Created vector!" << std::endl;
+            bool success = SDL_EnumerateDirectory(
+                userpath,
+                DirectoryCallback,
+                reinterpret_cast<void*>(udata)
+            );
+            SDL_free(userpath);
 
-            try {
-                data->buffer->push_back(Set(vec));
-            } catch (const DeserializationError& e) {
-                std::cout << "An error occured while deserializing a set: "
-                    << e.what() << std::endl;
-            } catch (...) {
-                std::cout << "FUckery vuckery" << std::endl;
+            // std::cout << "ENUMERATED DIR? " << success
+            //     << " Count: " << task_count << std::endl;
+
+            if (!success) {
+                data->buffer_state->store(BufferState::Failed);
+                delete data;
+                return 0;
             }
 
-            std::cout << "while ended. TaskCount:" << task_count << std::endl;
+            // Wait for all the files to be read and deserialize them
+            SDL_AsyncIOOutcome outcome;
+            while (task_count > 0) {
+                // Sleep the thread until something completes
+                if (!SDL_WaitAsyncIOResult(ioqueue, &outcome, -1)) {
+                    continue;
+                }
+                --task_count;
+
+                if (outcome.result == SDL_ASYNCIO_FAILURE) {
+                    std::cout << "Failure while reading a file!" << std::endl;
+                    continue;
+                }
+
+                uint8_t *buff = reinterpret_cast<uint8_t*>(outcome.buffer);
+                Uint64 size = outcome.bytes_transferred;
+
+                std::vector<uint8_t> vec (buff, buff + size);
+
+                try {
+                    data->buffer->push_back(Set(vec));
+                } catch (const DeserializationError& e) {
+                    std::cout << "An error occured while deserializing a set: "
+                        << e.what() << std::endl;
+                } catch (const EmptyString & e) {
+                    std::cout << "EmptyString error while deserializing a set: "
+                        << e.what() << std::endl;
+                }
+            }
+
+
+            data->buffer_state->store(BufferState::Ready);
+        } catch (const std::exception& e) {
+            std::cerr << "Scan worker thread encountreed an exception: "
+                << e.what() << std::endl;
+
+            data->buffer_state->store(BufferState::Failed);
+        } catch (...) {
+            std::cerr
+                << "Scan worker thread encountered an unkown exception!" << std::endl;
+
+            data->buffer_state->store(BufferState::Failed);
         }
 
-        std::cout << "Worker thread dead!" << std::endl;
-
-        data->buffer_state->store(BufferState::Ready);
         delete data;
+
+        std::cout << "Scan worker thread dead!" << std::endl;
         return 0;
     }
 

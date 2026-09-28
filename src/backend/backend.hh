@@ -93,7 +93,9 @@ namespace Cardflash {
             Set(std::string author, std::string title, std::string subject);
 
             /// Constructs a set from a Serialize()-d array of bytes.
-            /// May throw DeserializationError if the input isn't valid!
+            /// May throw DeserializationError if the input isn't valid
+            /// or an EmptyString if a card is being initialized with
+            /// empty back or front.
             Set(std::vector<uint8_t>& serialized);
 
             /// Returns whether the set is ready to be read (finalized).
