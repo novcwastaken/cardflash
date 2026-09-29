@@ -12,7 +12,8 @@ bool operator==(const Cardflash::Set& a, const Cardflash::Set& b) {
         a.IsSetFinalized() == b.IsSetFinalized() &&
         a.GetRefCards().size() == b.GetRefCards().size() &&
         a.connect_correct.size() == b.connect_correct.size() &&
-        a.learn_correct.size() == b.learn_correct.size();
+        a.learn_correct.size() == b.learn_correct.size() &&
+        a.uuid == b.uuid;
 
     // If these parameters don't match the cards shouldn't be matched either
     if (!base) return base;
@@ -98,7 +99,6 @@ TEST_CASE("(De)serialization of Set", "[serde]") {
         ),
     });
 
-    // Still doesn't work properly
     set.learn_correct.insert(set.learn_correct.end(), {1, 2, 3, 4, 5, 6, 7, 8, 10});
     set.connect_correct.insert(set.connect_correct.end(), {1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
 

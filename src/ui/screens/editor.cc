@@ -1,10 +1,9 @@
-#include <string>
+#include "../state.hh"
+
 #include "imgui.h"
-#include "imgui_internal.h"
-#include "screens.hh"
 
 namespace CardflashUI {
-    void Editor(int window_width, int window_height, int top_bar_height) {
+    void UiState::Editor(int window_width, int window_height, int top_bar_height) {
         ImGui::SetNextWindowPos(ImVec2(0, top_bar_height));
         ImGui::SetNextWindowSize(ImVec2(window_width*0.8, window_height));
 

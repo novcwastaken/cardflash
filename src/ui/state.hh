@@ -4,6 +4,7 @@
 #ifndef __STATE_HH_IFNDEF__
 #define __STATE_HH_IFNDEF__
 
+#include "backend/backend.hh"
 #include <GLFW/glfw3.h>
 
 namespace CardflashUI {
@@ -11,9 +12,15 @@ namespace CardflashUI {
 
     class UiState {
         Screen screen;
+        Cardflash::SetManager set_manager = Cardflash::SetManager();
 
         /// Renders the top menu bar
         float TopBar(GLFWwindow* window);
+
+        /// Renders the main menu
+        void MainMenu(int window_width, int window_height, int top_bar_height);
+        /// Renders the card editor menu
+        void Editor(int window_width, int window_height, int top_bar_height);
 
         public:
             UiState();
