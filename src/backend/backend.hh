@@ -277,7 +277,13 @@ namespace Cardflash {
 
             /// Adds a set to the set collection / saves it.
             ///
-            /// Throws ScanRunning if ScanRunning() is true!
+            /// Using this while a scan is running or while any
+            /// references are (mutable or not) is UB. If any mutable
+            /// set references are still out (Not al returned it with
+            /// DropSetRef) throws a NotAllRefsReturned!
+            ///
+            /// It's also forbidden to call this while  ScanRunning()
+            /// is true. If done a ScanRunning will be thrown!
             void AddSet(Set set);
 
             /// Search through the sets and return a list of results.

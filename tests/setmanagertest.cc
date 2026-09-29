@@ -16,12 +16,12 @@ TEST_CASE("Set manager", "[setmanager]") {
     SECTION("General usecase 1") {
         Set one = Set("John Doe", "Very Cool Title", "Cool Subject");
         one.Expand(Card("Front", "Back"));
-
+        REQUIRE(one.IsSetFinalized());
         man.AddSet(one);
-        man.Scan();
-        while (man.IsScanning());
 
         Set &oneref = man.GetSet(0);
+        REQUIRE(man.IsScanDisabled());
+        REQUIRE_THROWS_AS(man.GetSetsRef(), NotAllRefsReturned);
         oneref.title = "Actually, this is cooler!";
         man.Save(oneref);
         man.DropSetRef(oneref);
@@ -29,40 +29,34 @@ TEST_CASE("Set manager", "[setmanager]") {
         Set two = Set("Meow", "Meow (but title)", "Mewo (subject)");
         two.Expand(Card("Me", "Ow"));
         man.AddSet(two);
-        while (man.IsScanning());
 
-        auto list = man.GetSetsRef();
-        // std::cout << "Things to be listed: (" << list.size() << ")" << std::endl;
-        // for (const auto& i : list) {
-        //     std::cout << i.DebugFmt() << std::endl;
-        // }
-        // std::cout << "That's it!" << std::endl;
+        // Refs must cannot be reassigend!
+        Set &onereftwo = man.GetSet(0);
+        onereftwo.author = "Gunter";
+
+        REQUIRE(man.IsScanDisabled());
+        REQUIRE_THROWS_AS(man.GetSetsRef(), NotAllRefsReturned);
+        REQUIRE_THROWS_AS(man.AddSet(two), NotAllRefsReturned);
+        // This was already dropped, and thus shouldn't be able
+        // to return it again!
+        REQUIRE_THROWS(man.DropSetRef(oneref));
 
         Set &tworef = man.GetSet(1);
-        oneref = man.GetSet(0);
-        oneref.author = "Gunter";
-        man.Save(oneref);
-
         tworef.subject = "COOL AS SUBJECT FOR THE 2ND THING!";
 
-        man.DropSetRef(oneref);
+        REQUIRE(man.IsScanDisabled());
+        REQUIRE_THROWS_AS(man.GetSetsRef(), NotAllRefsReturned);
 
-        // Blows up
-        // list = man.GetSetsRef();
+        man.Save(onereftwo);
+        man.Save(tworef);
 
-        // Blows up
-        // Set three = Set("Three", "Gunter (three)", "IDFK");
-        // two.Expand(Card("Ow", "wO"));
-        // man.AddSet(three);
-
-        // Doesn't do anything (scan is disabled)
-        man.Scan();
-
+        man.DropSetRef(onereftwo);
         man.DropSetRef(tworef);
 
         REQUIRE(!man.IsScanDisabled());
-        man.Scan();
-        while (man.IsScanning());
+        REQUIRE_NOTHROW(man.GetSetsRef());
+
+        REQUIRE_THROWS_AS(man.GetSet(10), std::out_of_range);
     }
 #endif
 

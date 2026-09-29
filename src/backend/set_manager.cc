@@ -71,7 +71,11 @@ namespace Cardflash {
     }
 
     Set& SetManager::GetSet(size_t index) {
-        if (index > this->sets.size()) throw (std::out_of_range(
+        if (this->sets.size() == 0) throw (std::out_of_range(
+            "GetSet: tried to get a set with a set size of 0."
+        ));
+
+        if (index >= this->sets.size()) throw (std::out_of_range(
             "GetSet: index is out of the range of the Set array!"
         ));
 
