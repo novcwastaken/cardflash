@@ -1,6 +1,8 @@
 #include "backend.hh"
+#include "SDL3/SDL_time.h"
 #include "uuid_v4.h"
 
+#include <cstring>
 #include <iterator>
 #include <cstdint>
 #include <format>
@@ -13,6 +15,17 @@
 #define EVIL_MODE true
 
 namespace Cardflash {
+    inline bool is_little_endian() {
+        // 00000000 00000001
+        uint16_t a = 1;
+        // On little endian this will point to the second half
+        // which is 1, on big endian this will point to the first half
+        // which is 0
+        uint8_t *p = reinterpret_cast<uint8_t*>(&a);
+
+        return *p == 1;
+    }
+
     inline void U16ToLEBytes(uint16_t value, uint8_t destination[2]) {
         destination[0] = (uint8_t)(value & 0b0000000011111111); // Low byte
         destination[1] = (uint8_t)(value >> 8);                 // High byte
@@ -120,6 +133,19 @@ namespace Cardflash {
         return this->uuid;
     }
 
+    const void Set::SetLastOpenedTimestamp() {
+        SDL_Time time;
+        if (!SDL_GetCurrentTime(&time)) {
+            std::cout << "Failed to get system time!" << std::endl;
+            time = 0;
+        }
+        this->last_opened_timestamp = time;
+    }
+
+    const int64_t Set::GetLastOpenedTimestamp() const {
+        return this->last_opened_timestamp;
+    }
+
     enum DeserStage : short {
         Title,
         Author,
@@ -133,9 +159,9 @@ namespace Cardflash {
 
     /// Deserialization
     Set::Set(std::vector<uint8_t>& in) {
-        // Min size of a serialized set is 13 bytes (just the header)
+        // Min size of a serialized set is 37 bytes
         // + 1 char title + 1 char author (empty cards)
-        if (in.size() <= 32)
+        if (in.size() <= 39)
         #if EVIL_MODE
             throw(DeserializationError(
                 "Data is shorter than someone in the team!"
@@ -155,6 +181,15 @@ namespace Cardflash {
         }
         this->uuid = UUIDv4::UUID(uuid_bytes);
 
+        uint8_t timestamp_bytes[8];
+        for (unsigned short i = 0; i < 8; ++i) {
+            timestamp_bytes[i] = *iter;
+            ++iter;
+        }
+        Sint64 timestamp = 0;
+        memcpy(&timestamp, timestamp_bytes, 8);
+        this->last_opened_timestamp = timestamp;
+
         uint16_t sizeof_title = LEBytesToU16(iter);
         uint16_t sizeof_author = LEBytesToU16(iter + 2);
         uint16_t sizeof_subject = LEBytesToU16(iter + 4);
@@ -165,10 +200,10 @@ namespace Cardflash {
         bool is_learn_correct_u8 = *iter & 0x2;
         bool is_connect_correct_u8 = *iter & 0x1;
 
-        // Header size is 13 bytes + 16 (uuid) = 29
+        // Header size is 13 bytes + 16 (uuid) + 8 time = 39
         // std::cout << in.size() << std::endl;
         if (static_cast<size_t>(sizeof_title + sizeof_author + sizeof_subject + sizeof_learn_correct +
-            sizeof_connect_correct + sizeof_learning_status) > in.size() - 29)
+            sizeof_connect_correct + sizeof_learning_status) > in.size() - 39)
             throw(DeserializationError("Data body too small"));
 
         // Advance iter to the first data byte
@@ -360,8 +395,8 @@ namespace Cardflash {
         // This is neede so only 1 allocation ever happens
         // which will make the whole thing faster (probably)
         size_t reserve_size =
-            // Header: 16(uuid) + 6 * u16 + 1 byte (bitflag)
-            (16 + 2 * 6 + 1) +
+            // Header: 16(uuid) + 8(last played) + 6 * u16 + 1 byte (bitflag)
+            (16 + 8 + 2 * 6 + 1) +
             // Body: title + author + subject
             this->title.size() + this->author.size() + this->subject.size() +
             // Learn* / Connect* Correct sizes
@@ -387,6 +422,17 @@ namespace Cardflash {
         std::string s_uuid = this->uuid.bytes();
         for (const uint8_t b : s_uuid) {
             buff.push_back(b);
+        }
+
+        uint8_t timestamp[8];
+        memcpy(&timestamp, &this->last_opened_timestamp, 8);
+
+        if (is_little_endian()) {
+            buff.insert(buff.end(), std::begin(timestamp), std::end(timestamp));
+        } else {
+            for (int8_t i = 7; i < 0; --i) {
+                buff.push_back(timestamp[i]);
+            }
         }
 
         uint16_t header[] = {

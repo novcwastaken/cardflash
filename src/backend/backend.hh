@@ -1,10 +1,11 @@
 #pragma once
-#include <map>
 #ifndef __BACKEND_HPP_GUARD__
 #define __BACKEND_HPP_GUARD__
 
+#include "SDL3/SDL_stdinc.h"
 #include "uuid_v4.h"
 
+#include <map>
 #include <atomic>
 #include <string>
 #include <vector>
@@ -96,6 +97,8 @@ namespace Cardflash {
 
         UUIDv4::UUID uuid;
 
+        Sint64 last_opened_timestamp = 0;
+
         #ifndef CARDFLASH_BACKEND_DEBUG
         public:
         #endif
@@ -130,6 +133,10 @@ namespace Cardflash {
 
             const void Expand(std::vector<Card>& with);
 
+            const void SetLastOpenedTimestamp();
+
+            const int64_t GetLastOpenedTimestamp() const;
+
             /// Returns a static reference to the internal card vector.
             /// Do not modify it!
             ///
@@ -146,7 +153,8 @@ namespace Cardflash {
             /// Serialized representation:
             ///
             /// Header (each value is u16 unless stated otherwise):
-            ///     16bytes: UUID
+            ///     16 bytes: UUID
+            ///     8 bytes: last opened unix timestamp (signed)
             ///     SizeOf(Title)
             ///     SizeOf(Author)
             ///     SizeOf(Subject)
@@ -172,7 +180,7 @@ namespace Cardflash {
             ///     01: Still learning
             ///     00: Not occupied
             ///
-            /// Min size is 29 bytes!
+            /// Min size is 37 bytes!
             std::vector<uint8_t> Serialize();
 
             /// Returns a debug string

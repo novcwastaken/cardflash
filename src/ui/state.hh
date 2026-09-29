@@ -8,10 +8,20 @@
 #include <GLFW/glfw3.h>
 
 namespace CardflashUI {
-    enum class Screen : short;
+    /// Possible states of the main window
+    enum class Screen : short {
+        /// In the menu
+        Menu,
+        /// Viewing a set
+        SetView,
+        /// Playing flashcard mode in a set
+        FlashCard,
+        /// In editor
+        Editor,
+    };
 
     class UiState {
-        Screen screen;
+        Screen screen = Screen::Menu;
         Cardflash::SetManager set_manager = Cardflash::SetManager();
 
         /// Renders the top menu bar
@@ -23,7 +33,6 @@ namespace CardflashUI {
         void Editor(int window_width, int window_height, int top_bar_height);
 
         public:
-            UiState();
             void Render(int w, int h, GLFWwindow* window);
     };
 }
