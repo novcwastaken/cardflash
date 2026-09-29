@@ -1,10 +1,14 @@
 #include "../state.hh"
 
+#include "SDL3/SDL_time.h"
 #include "imgui.h"
 #include "screens.hh"
 
-#include <iostream>
+#include <format>
 #include <string>
+
+using namespace Cardflash;
+using namespace CardflashUI;
 
 namespace CardflashUI {
     /// The main menu (wow)
@@ -19,19 +23,30 @@ namespace CardflashUI {
         ImGui::Text("Welcome back!");
 
         if (ImGui::Button("Create")) {}
+        ImGui::SetItemTooltip("Create a brand new set.");
+
         ImGui::SameLine();
-        if (ImGui::Button("Open")) {}
+        if (ImGui::Button("Search")) {}
+        ImGui::SetItemTooltip("Open a searchbar to look through loaded cards.");
+
         ImGui::SameLine();
         if (ImGui::Button("Import")) {}
-        ImGui::SameLine();
+        ImGui::SetItemTooltip("Open a file dialog a import a set from the system.");
 
-        if (ImGui::Button(
-            this->set_manager.DidScanFail()
-                ? "Refresh failed!"
-                : "Refresh"
-        )) {
-            std::cout << "Scanning set manager!" << std::endl;
-            this->set_manager.Scan();
+        // Refresh
+        if (!this->man.IsScanDisabled()) {
+            std::string scan_button_text = "Refresh";
+            if (this->man.IsScanning()) {
+                scan_button_text = "Pondering...";
+            } else if (this->man.DidScanFail()) {
+                scan_button_text = "Refresh -- Failed!";
+            }
+
+            ImGui::SameLine();
+            if (ImGui::Button(scan_button_text.c_str())) {
+                this->man.Scan();
+            }
+            ImGui::SetItemTooltip("Scan the user directory of cardflash for any new card sets.");
         }
 
         // Recents
@@ -40,13 +55,41 @@ namespace CardflashUI {
             ImGui::TableSetupColumn("Name");
             ImGui::TableSetupColumn("Author");
             ImGui::TableSetupColumn("Subject");
-            ImGui::TableSetupColumn("Questions");
+            ImGui::TableSetupColumn("Cards");
             ImGui::TableSetupColumn("Last opened");
 
             ImGui::TableHeadersRow();
 
             // Rows
-            CardflashUI::PlaceholderRecentSetTableRow("Hitler Nigger", "Günter", "History", 20, "2026/04/12");
+            void UpdateOrderedSets();
+            for (const Set& s : this->ordered_sets) {
+                auto last_opened = s.GetLastOpenedTimestamp();
+                std::string last_opened_fmt;
+
+                if (last_opened != 0) {
+                    SDL_DateTime dt;
+                    SDL_TimeToDateTime(last_opened, &dt, true);
+
+                    last_opened_fmt = std::format(
+                        "{}/{:02d}/{:02d} {:02d}:{:02d}",
+                        dt.year,
+                        dt.month,
+                        dt.day,
+                        dt.hour,
+                        dt.minute
+                    );
+                } else {
+                    last_opened_fmt = "Never";
+                }
+
+                RecentSetTableRow(
+                    s.title,
+                    s.author,
+                    s.subject,
+                    s.GetRefCards().size(),
+                    last_opened_fmt
+                );
+            }
 
             ImGui::EndTable();
         }
@@ -54,7 +97,7 @@ namespace CardflashUI {
         ImGui::End();
     }
 
-    void PlaceholderRecentSetTableRow(std::string name, std::string author, std::string subject, int questions, std::string last_opened) {
+    void RecentSetTableRow(std::string name, std::string author, std::string subject, int questions, std::string last_opened) {
         ImGui::TableNextRow();
 
         ImGui::TableNextColumn();

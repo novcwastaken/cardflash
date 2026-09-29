@@ -6,6 +6,7 @@
 
 #include "backend/backend.hh"
 #include <GLFW/glfw3.h>
+#include <vector>
 
 namespace CardflashUI {
     /// Possible states of the main window
@@ -22,7 +23,12 @@ namespace CardflashUI {
 
     class UiState {
         Screen screen = Screen::Menu;
-        Cardflash::SetManager set_manager = Cardflash::SetManager();
+        Cardflash::SetManager man = Cardflash::SetManager();
+        // An ordered clone of the sets. Needed for the main menu
+        // and open recent in the top bar!
+        std::vector<Cardflash::Set> ordered_sets;
+
+        void UpdateOrderedSets();
 
         /// Renders the top menu bar
         float TopBar(GLFWwindow* window);

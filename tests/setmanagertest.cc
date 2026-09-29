@@ -16,6 +16,7 @@ TEST_CASE("Set manager", "[setmanager]") {
     SECTION("General usecase 1") {
         Set one = Set("John Doe", "Very Cool Title", "Cool Subject");
         one.Expand(Card("Front", "Back"));
+        one.SetLastOpenedTimestamp();
         REQUIRE(one.IsSetFinalized());
         man.AddSet(one);
 

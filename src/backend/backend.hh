@@ -226,6 +226,12 @@ namespace Cardflash {
 
 
         public:
+            /// Set by the manager or anything borrowing a set
+            /// when something in a set's property changes. The
+            /// manager never sets it to false, nor it uses it for
+            /// any internal machinery.
+            bool sets_changed = false;
+
             /// Throws SingletonAlreadyInited if SetManager
             /// was already instantiated
             SetManager();
@@ -252,6 +258,12 @@ namespace Cardflash {
             /// Throws NotAllRefsReturned if not all references
             /// acquired with GetSet is returned (see DropSetRef).
             const std::vector<Set>& GetSetsRef();
+
+            /// Returns a clone of the current Sets.
+            ///
+            /// Calling this often will cause a lot of
+            /// memory usage, so dont.
+            std::vector<Set> GetSetsClone();
 
             /// Gets a mutable reference to a Set specified by the index
             /// in the Sets. Disables starting a new scan until all the

@@ -4,7 +4,7 @@
 #include <string>
 
 namespace CardflashUI {
-    void PlaceholderRecentSetTableRow(std::string name, std::string author, std::string subject, int questions, std::string last_opened);
+    void RecentSetTableRow(std::string name, std::string author, std::string subject, int questions, std::string last_opened);
 }
 
 #endif

@@ -39,6 +39,8 @@ namespace Cardflash {
             this->sets = std::move(this->buffer);
             this->buffer.clear();
 
+            this->sets_changed = true;
+
             this->buffer_state.store(BufferState::Empty);
         } else if (state == BufferState::Failed) {
             this->buffer.clear();
@@ -66,6 +68,11 @@ namespace Cardflash {
             "Tried to get a Sets reference while still borrowing individual Sets!"
         ));
 
+        this->CheckBufferState();
+        return this->sets;
+    }
+
+    std::vector<Set> SetManager::GetSetsClone() {
         this->CheckBufferState();
         return this->sets;
     }
@@ -170,6 +177,7 @@ namespace Cardflash {
             "Tried to add set while some reference is not returned!"
         ));
 
+        this->sets_changed = true;
         this->sets.push_back(set);
         this->Save(this->sets[this->sets.size() - 1]);
     }
