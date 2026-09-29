@@ -29,6 +29,30 @@ target_include_directories(imgui PUBLIC
   ${IMGUI_DIR}/backends
 )
 
+# ==== SDL3 config ====
+set(SDL_SHARED OFF CACHE BOOL "" FORCE)
+set(SDL_STATIC ON  CACHE BOOL "" FORCE)
+
+# Optional subsystems off
+set(SDL_VIDEO    OFF CACHE BOOL "" FORCE)
+set(SDL_RENDER   OFF CACHE BOOL "" FORCE)
+set(SDL_GPU      OFF CACHE BOOL "" FORCE)
+set(SDL_CAMERA   OFF CACHE BOOL "" FORCE)
+set(SDL_AUDIO    OFF CACHE BOOL "" FORCE)
+set(SDL_JOYSTICK OFF CACHE BOOL "" FORCE)
+set(SDL_HAPTIC   OFF CACHE BOOL "" FORCE)
+set(SDL_HIDAPI   OFF CACHE BOOL "" FORCE)
+set(SDL_POWER    OFF CACHE BOOL "" FORCE)
+set(SDL_SENSOR   OFF CACHE BOOL "" FORCE)
+set(SDL_DIALOG   OFF CACHE BOOL "" FORCE)
+
+# Don't build extras
+set(SDL_TESTS         OFF CACHE BOOL "" FORCE)
+set(SDL_TEST_LIBRARY  OFF CACHE BOOL "" FORCE)
+set(SDL_EXAMPLES      OFF CACHE BOOL "" FORCE)
+set(SDL_INSTALL       OFF CACHE BOOL "" FORCE)
+set(SDL_UNIX_CONSOLE_BUILD ON CACHE BOOL "" FORCE)
+
 add_subdirectory(external/SDL EXCLUDE_FROM_ALL)
 add_subdirectory(external/UUID4 EXCLUDE_FROM_ALL)
 
@@ -62,4 +86,3 @@ target_link_libraries(tests PRIVATE SDL3::SDL3)
 
 include(Catch)  # from Catch2 3.x, wait — see note below
 catch_discover_tests(tests)
-
