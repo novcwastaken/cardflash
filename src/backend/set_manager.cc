@@ -77,7 +77,7 @@ namespace Cardflash {
         return this->sets;
     }
 
-    Set& SetManager::GetSet(size_t index) {
+    Set* SetManager::GetSet(size_t index) {
         if (this->sets.size() == 0) throw (std::out_of_range(
             "GetSet: tried to get a set with a set size of 0."
         ));
@@ -90,28 +90,30 @@ namespace Cardflash {
 
         this->DisableBuffer();
 
-        Set* ref = &this->sets[index];
+        Set* ptr = &this->sets[index];
         try {
-            (this->refcount.at(ref))++;
+            (this->refcount.at(ptr))++;
         } catch (const std::out_of_range& _) {
-            this->refcount.insert( {ref, 1} );
+            this->refcount.insert( {ptr, 1} );
         }
 
-        return this->sets[index];
+        return ptr;
     }
 
-    void SetManager::DropSetRef(Set &set) {
+    void SetManager::DropSetRef(Set *set) {
         try {
-            size_t ref = this->refcount.at(&set);
-            if (ref - 1 == 0) {
-                this->refcount.erase(&set);
+            // A number describing how many handed out pointers
+            // are active for an object
+            size_t set_ref_count = this->refcount.at(set);
+            if (set_ref_count - 1 == 0) {
+                this->refcount.erase(set);
 
                 if (this->refcount.empty()) {
                     this->buffer.clear();
                     this->buffer_state.store(BufferState::Empty);
                 }
             } else {
-                --this->refcount[&set];
+                --this->refcount[set];
             }
         } catch (const std::out_of_range& _) {
             throw(std::runtime_error(
@@ -139,7 +141,7 @@ namespace Cardflash {
         return result == BufferState::Disabled;
     }
 
-    void SetManager::Save(Set &set) {
+    void SetManager::Save(Set *set) {
         // Open <SET.UUID>.cardflash
         char *userpath = SDL_GetPrefPath(NULL, "cardflash");
 
@@ -151,7 +153,7 @@ namespace Cardflash {
             "Failed to allocate memory for the name of the set to be saved!"
         ));
 
-        std::string uuid_str = set.GetUUID().str();
+        std::string uuid_str = set->GetUUID().str();
 
         memcpy(filepath + user_path_size, &uuid_str[0], 36);
         memcpy(filepath + user_path_size + 36, ".cardflash", 11);
@@ -160,7 +162,7 @@ namespace Cardflash {
         SDL_free(filepath);
 
         // Run serialize
-        std::vector<uint8_t> serialized = set.Serialize();
+        std::vector<uint8_t> serialized = set->Serialize();
 
         // Write data into file
         SDL_WriteIO(file, &serialized.front(), serialized.size());
@@ -179,7 +181,7 @@ namespace Cardflash {
 
         this->sets_changed = true;
         this->sets.push_back(set);
-        this->Save(this->sets[this->sets.size() - 1]);
+        this->Save(&this->sets[this->sets.size() - 1]);
     }
 
     //  Scanning

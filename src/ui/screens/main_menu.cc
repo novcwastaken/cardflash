@@ -2,7 +2,6 @@
 
 #include "SDL3/SDL_time.h"
 #include "imgui.h"
-#include "screens.hh"
 
 #include <format>
 #include <string>
@@ -11,13 +10,49 @@ using namespace Cardflash;
 using namespace CardflashUI;
 
 namespace CardflashUI {
+    void RecentSetTableRow(
+        std::string name,
+        std::string author,
+        std::string subject,
+        int questions,
+        std::string last_opened,
+        bool *selected,
+        size_t index
+    ) {
+        ImGui::TableNextRow();
+
+        ImGui::TableNextColumn();
+        ImGui::PushID(index);
+        ImGui::Selectable(name.c_str(), selected);
+        ImGui::PopID();
+
+        ImGui::TableNextColumn();
+        ImGui::PushID(index);
+        ImGui::Selectable(author.c_str(), selected);
+        ImGui::PopID();
+
+        ImGui::TableNextColumn();
+        ImGui::PushID(index);
+        ImGui::Selectable(subject.c_str(), selected);
+        ImGui::PopID();
+
+        ImGui::TableNextColumn();
+        ImGui::PushID(index);
+        ImGui::Selectable(std::to_string(questions).c_str(), selected);
+        ImGui::PopID();
+
+        ImGui::TableNextColumn();
+        ImGui::PushID(index);
+        ImGui::Selectable(last_opened.c_str(), selected);
+        ImGui::PopID();
+    }
+
     /// The main menu (wow)
     void UiState::MainMenu(int window_width, int window_height, int top_bar_height) {
         ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
 
         ImGui::SetNextWindowPos(ImVec2(0, top_bar_height)); // Magic number
         ImGui::SetNextWindowSize(ImVec2(window_width, window_height));
-
         ImGui::Begin("Main Menu", nullptr, flags);
 
         ImGui::Text("Welcome back!");
@@ -62,7 +97,9 @@ namespace CardflashUI {
 
             // Rows
             void UpdateOrderedSets();
-            for (const Set& s : this->ordered_sets) {
+            for (size_t i = 0; i < this->ordered_sets.size(); ++i) {
+                const Set& s = this->ordered_sets[i];
+
                 auto last_opened = s.GetLastOpenedTimestamp();
                 std::string last_opened_fmt;
 
@@ -87,7 +124,9 @@ namespace CardflashUI {
                     s.author,
                     s.subject,
                     s.GetRefCards().size(),
-                    last_opened_fmt
+                    last_opened_fmt,
+                    &this->ordered_sets_table_selection[i].value,
+                    i
                 );
             }
 
@@ -95,24 +134,5 @@ namespace CardflashUI {
         }
 
         ImGui::End();
-    }
-
-    void RecentSetTableRow(std::string name, std::string author, std::string subject, int questions, std::string last_opened) {
-        ImGui::TableNextRow();
-
-        ImGui::TableNextColumn();
-        ImGui::Text("%s", name.c_str());
-
-        ImGui::TableNextColumn();
-        ImGui::Text("%s", author.c_str());
-
-        ImGui::TableNextColumn();
-        ImGui::Text("%s", subject.c_str());
-
-        ImGui::TableNextColumn();
-        ImGui::Text("%d", questions);
-
-        ImGui::TableNextColumn();
-        ImGui::Text("%s", last_opened.c_str());
     }
 }

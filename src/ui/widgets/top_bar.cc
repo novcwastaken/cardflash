@@ -12,8 +12,15 @@ namespace CardflashUI {
 
         if (ImGui::BeginMainMenuBar()) {
             if (ImGui::BeginMenu("Cardflash")) {
-                ImGui::MenuItem("Main Menu");
+                if (ImGui::MenuItem("Main Menu")) {
+                    // TODO: Not blindly set this if there is any unsaved
+                    // progress
+                    if (this->tracked_set.has_value())
+                        this->man.DropSetRef(this->tracked_set.value());
+                    this->screen = Screen::Menu;
+                }
 
+                // TODO: Probably remove ts
                 ImGui::MenuItem("Open Set...");
 
                 if (ImGui::BeginMenu("Open Recent Set")) {
@@ -21,7 +28,20 @@ namespace CardflashUI {
 
                     for (size_t i = 0; i < this->ordered_sets.size(); ++i) {
                         ImGui::PushID(i);
-                        ImGui::MenuItem(this->ordered_sets[i].title.c_str());
+                        if (ImGui::MenuItem(this->ordered_sets[i].title.c_str())) {
+                            if (this->tracked_set.has_value())
+                                this->man.DropSetRef(this->tracked_set.value());
+                            UUIDv4::UUID target_uuid = this->ordered_sets[i].GetUUID();
+
+                            auto setref = this->man.GetSetsRef();
+                            for (size_t ref_i = 0; ref_i < setref.size(); ++ref_i) {
+                                if (setref[ref_i].GetUUID() == target_uuid) {
+                                    this->tracked_set = this->man.GetSet(ref_i);
+                                    this->screen = Screen::SetView;
+                                    break;
+                                }
+                            }
+                        }
                         ImGui::PopID();
                     }
 

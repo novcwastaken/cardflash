@@ -278,7 +278,7 @@ namespace Cardflash {
             /// a Set reference is live. This is not enforced, but all Sets
             /// must be returned with DropSetRef before a new ref
             /// to sets could be acquired!
-            Set& GetSet(size_t index);
+            Set* GetSet(size_t index);
 
             /// Removes the internal reference counting of a Set.
             ///
@@ -286,13 +286,13 @@ namespace Cardflash {
             ///     alrady dropped!)
             ///
             /// Using a reference after this is called is UB! (pls dont :3)
-            void DropSetRef(Set &set);
+            void DropSetRef(Set *set);
 
             /// Saves a set after it has been modified.
             ///
             /// Don't forget to return the ref (with DropSetRef)
             /// if you don't need a mutable reference anymore.
-            void Save(Set &set);
+            void Save(Set *set);
 
 
             /// Adds a set to the set collection / saves it.
