@@ -10,7 +10,16 @@ namespace CardflashUI {
         ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
 
         ImGui::Begin("Card List", nullptr, flags);
-        ImGui::Text("Cards go here");
+
+        if (ImGui::BeginTable("Cards", 2)) {
+            ImGui::TableSetupColumn("Front");
+            ImGui::TableSetupColumn("Back");
+            ImGui::TableHeadersRow();
+
+            const std::vector<Cardflash::Card>& refCards = this->tracked_set.value()->GetRefCards();
+            for (int i = 0; i < refCards.size(); ++i)
+        }
+
         ImGui::End();
 
         // -------------
