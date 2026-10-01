@@ -20,10 +20,10 @@ TEST_CASE("Set manager", "[setmanager]") {
         REQUIRE(one.IsSetFinalized());
         man.AddSet(one);
 
-        Set &oneref = man.GetSet(0);
+        Set *oneref = man.GetSet(0);
         REQUIRE(man.IsScanDisabled());
         REQUIRE_THROWS_AS(man.GetSetsRef(), NotAllRefsReturned);
-        oneref.title = "Actually, this is cooler!";
+        oneref->title = "Actually, this is cooler!";
         man.Save(oneref);
         man.DropSetRef(oneref);
 
@@ -32,8 +32,8 @@ TEST_CASE("Set manager", "[setmanager]") {
         man.AddSet(two);
 
         // Refs must cannot be reassigend!
-        Set &onereftwo = man.GetSet(0);
-        onereftwo.author = "Gunter";
+        Set *onereftwo = man.GetSet(0);
+        onereftwo->author = "Gunter";
 
         REQUIRE(man.IsScanDisabled());
         REQUIRE_THROWS_AS(man.GetSetsRef(), NotAllRefsReturned);
@@ -42,8 +42,8 @@ TEST_CASE("Set manager", "[setmanager]") {
         // to return it again!
         REQUIRE_THROWS(man.DropSetRef(oneref));
 
-        Set &tworef = man.GetSet(1);
-        tworef.subject = "COOL AS SUBJECT FOR THE 2ND THING!";
+        Set *tworef = man.GetSet(1);
+        tworef->subject = "COOL AS SUBJECT FOR THE 2ND THING!";
 
         REQUIRE(man.IsScanDisabled());
         REQUIRE_THROWS_AS(man.GetSetsRef(), NotAllRefsReturned);
