@@ -22,7 +22,7 @@ namespace CardflashUI {
         Editor,
     };
 
-    struct Bool { bool value; };
+    struct Bool { bool value = false; };
 
     class UiState {
         Screen screen = Screen::Menu;
@@ -39,7 +39,23 @@ namespace CardflashUI {
         void UpdateOrderedSets();
         // ==== !MAIN MENU ====
 
+        void SetTrackedSet(Cardflash::Set* set);
+        void DropTrackedSet();
         std::optional<Cardflash::Set*> tracked_set = std::nullopt;
+
+        // ==== SET VIEW ====
+        std::vector<Bool> set_view_is_back_revealed;
+        bool set_view_reveal_all = false;
+        // ==== !SET VIEW ====
+
+        // ==== EDITOR ====
+        void OpenEditor();
+        void SetSetAsTracked(Cardflash::Set set);
+        void SaveTracked();
+        std::optional<Cardflash::Set> editor_temp_set = std::nullopt;
+        std::vector<std::array<char, 1024>> editor_front_bufs;
+        std::vector<std::array<char, 1024>> editor_back_bufs;
+        // ==== !EDITOR ====
 
         /// Renders the top menu bar
         float TopBar(GLFWwindow* window);

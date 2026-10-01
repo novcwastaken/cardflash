@@ -117,7 +117,7 @@ namespace Cardflash {
 
 
     // class Set
-    inline Set::Set(std::string author, std::string title, std::string subject) {
+    Set::Set(std::string author, std::string title, std::string subject) {
         if (author.length() == 0 || title.length() == 0)
             throw(EmptyString("Tried to create a set with no author or title!"));
 
@@ -579,6 +579,15 @@ namespace Cardflash {
     const void Set::Expand(std::vector<Card>& with) {
         this->are_cards_ready = true;
         this->cards.insert(this->cards.end(), with.begin(), with.end());
+    }
+
+    void Set::Pop() {
+        if (!this->are_cards_ready) {}
+
+        this->cards.pop_back();
+        if (this->cards.size() == 0) {
+            this->are_cards_ready = false;
+        }
     }
 
     const std::vector<Card>& Set::GetRefCards() const {

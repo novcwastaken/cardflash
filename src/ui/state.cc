@@ -3,6 +3,8 @@
 #include "state.hh"
 #include "backend/backend.hh"
 #include "uuid_v4.h"
+#include <imgui.h>
+#include <cassert>
 
 #define gato goto
 
@@ -67,5 +69,85 @@ namespace CardflashUI {
                     < rhs.GetLastOpenedTimestamp();
             }
         );
+    }
+
+    void UiState::SetTrackedSet(Cardflash::Set* set) {
+        // Make sure the tracked set doesn't have a value
+        assert(!this->tracked_set.has_value());
+
+        this->tracked_set = set;
+    }
+
+    void UiState::DropTrackedSet() {
+        assert(this->tracked_set.has_value());
+
+        this->man.DropSetRef(this->tracked_set.value());
+        this->tracked_set = std::nullopt;
+    }
+
+    void UiState::OpenEditor() {
+        if (!this->tracked_set.has_value()) {
+            std::cout << "Should open popup" << std::endl;
+
+            static bool is_newset_popup_open = true;
+            static char title[512] = "";
+            static char author[512] = "";
+            static char subject[512] = "";
+
+            while (is_newset_popup_open) {
+                if (ImGui::BeginPopupModal("New Set", &is_newset_popup_open)) {
+                    ImGui::InputTextWithHint(
+                        "##newset_popup_title",
+                        "Title (required)",
+                        &(title[0]),
+                        512
+                    );
+                    ImGui::InputTextWithHint(
+                        "##newset_popup_author",
+                        "Title (required)",
+                        &(author[0]),
+                        512
+                    );
+                    ImGui::InputTextWithHint(
+                        "##newset_popup_subject",
+                        "Subject (optional)",
+                        &(subject[0]),
+                        512
+                    );
+
+                    if (
+                        ImGui::Button("Create new set")
+                        && title[1] != '\0'
+                        && author[1] != '\0'
+                    ) {
+                        auto set = Cardflash::Set(
+                            std::string(title),
+                            std::string(author),
+                            std::string(subject)
+                        );
+
+                        this->SetSetAsTracked(std::move(set));
+
+                        memset(title,0,sizeof(title));
+                        memset(author,0,sizeof(author));
+                        memset(subject,0,sizeof(subject));
+
+                        is_newset_popup_open = false;
+                    }
+
+                    ImGui::EndPopup();
+                }
+            }
+        }
+
+        this->screen = Screen::Editor;
+    }
+
+    void UiState::SetSetAsTracked(Cardflash::Set set) {
+        assert(!this->tracked_set.has_value());
+        assert(!this->editor_temp_set.has_value());
+
+        this->editor_temp_set = std::move(set);
+        this->tracked_set = &this->editor_temp_set.value();
     }
 }

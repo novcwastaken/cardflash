@@ -133,6 +133,12 @@ namespace Cardflash {
 
             const void Expand(std::vector<Card>& with);
 
+            /// Pop the last added card
+            ///
+            /// Throws SetNotFinalized is the set is not finalized
+            /// (aka there isn't any cards)
+            void Pop();
+
             const void SetLastOpenedTimestamp();
 
             const int64_t GetLastOpenedTimestamp() const;

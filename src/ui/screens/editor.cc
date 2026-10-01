@@ -1,9 +1,13 @@
 #include "../state.hh"
 
 #include "imgui.h"
+#include <cstring>
+#include <iostream>
 
 namespace CardflashUI {
     void UiState::Editor(int window_width, int window_height, int top_bar_height) {
+        assert(this->tracked_set.has_value());
+
         ImGui::SetNextWindowPos(ImVec2(0, top_bar_height));
         ImGui::SetNextWindowSize(ImVec2(window_width*0.8, window_height));
 
@@ -11,33 +15,49 @@ namespace CardflashUI {
 
         ImGui::Begin("Card List", nullptr, flags);
 
-        static int selected = -1;
-        const std::vector<Cardflash::Card>& refCards = this->tracked_set.value()->GetRefCards();
+        const std::vector<Cardflash::Card>& ref_cards = this->tracked_set.value()->GetRefCards();
+        if (
+            ref_cards.size() != this->editor_front_bufs.size()
+            || ref_cards.size() != this->editor_back_bufs.size()
+        ) {
+            std::cout << "Resized!" << std::endl;
+            this->editor_front_bufs.resize(ref_cards.size());
+            this->editor_back_bufs.resize(ref_cards.size());
+
+            for (size_t i = 0; i < ref_cards.size(); ++i) {
+                strcpy(this->editor_front_bufs[i].begin(), ref_cards[i].GetFront().c_str());
+                strcpy(this->editor_back_bufs[i].begin(), ref_cards[i].GetBack().c_str());
+            }
+        }
 
         if (ImGui::BeginTable("Cards", 2)) {
             ImGui::TableSetupColumn("Front");
             ImGui::TableSetupColumn("Back");
             ImGui::TableHeadersRow();
 
-            for (int i = 0; i < refCards.size(); i++) {
-                ImGui::PushID(i + 1);
+            for (int i = 0; i < ref_cards.size(); i++) {
+                ImGui::PushID(i);
+                ImGui::TableNextRow();
+
 
                 // Front
-                ImGui::TableNextRow();
                 ImGui::TableNextColumn();
-
-                char frontBuf[512];
-                strcpy(frontBuf, refCards[i].GetFront().c_str());
-
-                ImGui::InputTextWithHint("##front", "Front...", frontBuf, 255);
+                ImGui::InputTextWithHint(
+                    "##front",
+                    "Front...",
+                    this->editor_front_bufs[i].begin(),
+                    1024
+                );
 
                 // Back
                 ImGui::TableNextColumn();
+                ImGui::InputTextWithHint(
+                    "##back",
+                    "Back...",
+                    this->editor_back_bufs[i].begin(),
+                    1024
+                );
 
-                char backBuf[512];
-                strcpy(backBuf, refCards[i].GetBack().c_str());
-
-                ImGui::InputTextWithHint("##back", "Back...", backBuf, 255);
 
                 ImGui::PopID();
             }

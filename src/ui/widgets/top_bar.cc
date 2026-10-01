@@ -15,8 +15,9 @@ namespace CardflashUI {
                 if (ImGui::MenuItem("Main Menu")) {
                     // TODO: Not blindly set this if there is any unsaved
                     // progress
-                    if (this->tracked_set.has_value())
-                        this->man.DropSetRef(this->tracked_set.value());
+                    if (this->tracked_set.has_value()) {
+                        this->DropTrackedSet();
+                    }
                     this->screen = Screen::Menu;
                 }
 
@@ -65,7 +66,7 @@ namespace CardflashUI {
 
                 ImGui::Separator();
                 if (ImGui::MenuItem("Editor (TEMP)")) {
-                    this->screen = Screen::Editor;
+                    this->OpenEditor();
                 }
 
                 ImGui::EndMenu();
