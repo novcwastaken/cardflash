@@ -63,6 +63,11 @@ namespace CardflashUI {
                     glfwSetWindowShouldClose(window, true);
                 };
 
+                ImGui::Separator();
+                if (ImGui::MenuItem("Editor (TEMP)")) {
+                    this->screen = Screen::Editor;
+                }
+
                 ImGui::EndMenu();
             }
 

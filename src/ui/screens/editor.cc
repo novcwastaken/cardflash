@@ -11,13 +11,38 @@ namespace CardflashUI {
 
         ImGui::Begin("Card List", nullptr, flags);
 
+        static int selected = -1;
+        const std::vector<Cardflash::Card>& refCards = this->tracked_set.value()->GetRefCards();
+
         if (ImGui::BeginTable("Cards", 2)) {
             ImGui::TableSetupColumn("Front");
             ImGui::TableSetupColumn("Back");
             ImGui::TableHeadersRow();
 
-            const std::vector<Cardflash::Card>& refCards = this->tracked_set.value()->GetRefCards();
-            for (int i = 0; i < refCards.size(); ++i)
+            for (int i = 0; i < refCards.size(); i++) {
+                ImGui::PushID(i + 1);
+
+                // Front
+                ImGui::TableNextRow();
+                ImGui::TableNextColumn();
+
+                char frontBuf[512];
+                strcpy(frontBuf, refCards[i].GetFront().c_str());
+
+                ImGui::InputTextWithHint("##front", "Front...", frontBuf, 255);
+
+                // Back
+                ImGui::TableNextColumn();
+
+                char backBuf[512];
+                strcpy(backBuf, refCards[i].GetBack().c_str());
+
+                ImGui::InputTextWithHint("##back", "Back...", backBuf, 255);
+
+                ImGui::PopID();
+            }
+
+            ImGui::EndTable();
         }
 
         ImGui::End();

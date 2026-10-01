@@ -58,15 +58,15 @@ namespace CardflashUI {
         ImGui::Text("Welcome back!");
 
         if (ImGui::Button("Create")) {}
-        ImGui::SetItemTooltip("Create a brand new set.");
+        ImGui::SetItemTooltip("Create a new set.");
 
         ImGui::SameLine();
         if (ImGui::Button("Search")) {}
-        ImGui::SetItemTooltip("Open a searchbar to look through loaded cards.");
+        ImGui::SetItemTooltip("Open a search bar to find saved sets.");
 
         ImGui::SameLine();
         if (ImGui::Button("Import")) {}
-        ImGui::SetItemTooltip("Open a file dialog a import a set from the system.");
+        ImGui::SetItemTooltip("Open a file dialog to find and\nimport a set from your computer.");
 
         // Refresh
         if (!this->man.IsScanDisabled()) {
@@ -81,7 +81,7 @@ namespace CardflashUI {
             if (ImGui::Button(scan_button_text.c_str())) {
                 this->man.Scan();
             }
-            ImGui::SetItemTooltip("Scan the user directory of cardflash for any new card sets.");
+            ImGui::SetItemTooltip("Scan for new sets in the local directory.");
         }
 
         // Recents

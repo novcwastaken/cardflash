@@ -29,6 +29,9 @@ TEST_CASE("Set manager", "[setmanager]") {
 
         Set two = Set("Meow", "Meow (but title)", "Mewo (subject)");
         two.Expand(Card("Me", "Ow"));
+        two.Expand(Card("Cool front", "Cool back"));
+        two.Expand(Card("What is the mitochondria?", "The powerhouse... House... lupus"));
+        two.Expand(Card("Is it lupus?", "No"));
         man.AddSet(two);
 
         // Refs must cannot be reassigend!
