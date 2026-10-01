@@ -25,7 +25,8 @@ namespace CardflashUI {
         ImGui::InputTextWithHint("##01", "Front", front, IM_COUNTOF(front));
 
         char back[128] = "";
-        ImGui::InputTextWithHint("##02", "Back", back, IM_COUNTOF(back));
+        // ImGui::InputTextWithHint("##02", "Back", back, IM_COUNTOF(back));
+        ImGui::InputTextMultiline("##source", back, IM_COUNTOF(back), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
 
         ImGui::End();
     }
