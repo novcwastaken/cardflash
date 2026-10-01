@@ -12,34 +12,53 @@ namespace CardflashUI {
 
         if (ImGui::BeginMainMenuBar()) {
             if (ImGui::BeginMenu("Cardflash")) {
-                ImGui::MenuItem("Create Set...");
+                if (ImGui::MenuItem("Main Menu")) {
+                    // TODO: Not blindly set this if there is any unsaved
+                    // progress
+                    if (this->tracked_set.has_value())
+                        this->man.DropSetRef(this->tracked_set.value());
+                    this->screen = Screen::Menu;
+                }
+
+                // TODO: Probably remove ts
                 ImGui::MenuItem("Open Set...");
-                if (ImGui::BeginMenu("Open Recent Set")) { // TODO: Display the titles here instead of the filenames
-                    ImGui::MenuItem("sex1.cardflash");
-                    ImGui::MenuItem("rape2.cardflash");
-                    ImGui::MenuItem("assault3.cardflash");
-                    ImGui::MenuItem("anal4.cardflash");
-                    ImGui::MenuItem("femboy_thighs5.cardflash");
+
+                if (ImGui::BeginMenu("Open Recent Set")) {
+                    this->UpdateOrderedSets();
+
+                    for (size_t i = 0; i < this->ordered_sets.size(); ++i) {
+                        ImGui::PushID(i);
+                        if (ImGui::MenuItem(this->ordered_sets[i].title.c_str())) {
+                            if (this->tracked_set.has_value())
+                                this->man.DropSetRef(this->tracked_set.value());
+                            UUIDv4::UUID target_uuid = this->ordered_sets[i].GetUUID();
+
+                            auto setref = this->man.GetSetsRef();
+                            for (size_t ref_i = 0; ref_i < setref.size(); ++ref_i) {
+                                if (setref[ref_i].GetUUID() == target_uuid) {
+                                    this->tracked_set = this->man.GetSet(ref_i);
+                                    this->screen = Screen::SetView;
+                                    break;
+                                }
+                            }
+                        }
+                        ImGui::PopID();
+                    }
 
                     ImGui::EndMenu();
                 }
 
                 ImGui::Separator(); // Cool ass sep
-
                 ImGui::MenuItem("Save");
-                ImGui::MenuItem("Save As..."); // TODO: Disable (gray out) when the currently opened set is null
 
                 ImGui::Separator();
-
                 ImGui::MenuItem("Import Set...");
                 ImGui::MenuItem("Export Set..."); // TODO: Disable (gray out) when the currently opened set is null
 
                 ImGui::Separator();
-
                 ImGui::MenuItem("Preferences");
 
                 ImGui::Separator();
-
                 if (ImGui::MenuItem("Quit")) {
                     glfwSetWindowShouldClose(window, true);
                 };

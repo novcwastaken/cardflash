@@ -4,4 +4,4 @@
 set -ex
 
 cmake --build build --target tests -j$(nproc)
-build/tests
+build/tests $@
