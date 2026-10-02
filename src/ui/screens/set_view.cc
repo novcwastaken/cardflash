@@ -37,6 +37,14 @@ namespace CardflashUI {
         // ==== Cards ====
         SeparatorText("Cards");
 
+        if (Button("Reveal all")) {
+            this-> set_view_reveal_all = !this-> set_view_reveal_all;
+        }
+        SameLine();
+        if(Button("Edit")) {
+            this->screen = Screen::Editor;
+        }
+
         BeginTable("setview_card_preview", 2);
 
         // Header
