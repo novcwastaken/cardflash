@@ -51,10 +51,17 @@ namespace CardflashUI {
         // ==== EDITOR ====
         void OpenEditor();
         void SetSetAsTracked(Cardflash::Set set);
-        void SaveTracked();
+        // Save tracked_set. Returns false if couldn't save due to
+        // front or back buffers being empty, or a text field being empty!
+        //
+        // Asserts that tracked_set has a value!
+        bool SaveTracked();
         std::optional<Cardflash::Set> editor_temp_set = std::nullopt;
         std::vector<std::array<char, 1024>> editor_front_bufs;
         std::vector<std::array<char, 1024>> editor_back_bufs;
+        std::array<char, 1024> editor_title;
+        std::array<char, 1024> editor_author;
+        std::array<char, 1024> editor_subject;
         // ==== !EDITOR ====
 
         /// Renders the top menu bar

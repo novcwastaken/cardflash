@@ -21,8 +21,7 @@ namespace CardflashUI {
                     this->screen = Screen::Menu;
                 }
 
-                // TODO: Probably remove ts
-                ImGui::MenuItem("Open Set...");
+                if (ImGui::MenuItem("New Set...")) this->screen = Screen::Editor;
 
                 if (ImGui::BeginMenu("Open Recent Set")) {
                     this->UpdateOrderedSets();
@@ -49,12 +48,10 @@ namespace CardflashUI {
                     ImGui::EndMenu();
                 }
 
-                ImGui::Separator(); // Cool ass sep
-                ImGui::MenuItem("Save");
-
-                ImGui::Separator();
-                ImGui::MenuItem("Import Set...");
-                ImGui::MenuItem("Export Set..."); // TODO: Disable (gray out) when the currently opened set is null
+                // Not sure if this will actually be implemented, we'll see
+                // ImGui::Separator();
+                // ImGui::MenuItem("Import Set...");
+                // ImGui::MenuItem("Export Set..."); // TODO: Disable (gray out) when the currently opened set is null
 
                 ImGui::Separator();
                 ImGui::MenuItem("Preferences");
@@ -63,11 +60,6 @@ namespace CardflashUI {
                 if (ImGui::MenuItem("Quit")) {
                     glfwSetWindowShouldClose(window, true);
                 };
-
-                ImGui::Separator();
-                if (ImGui::MenuItem("Editor (TEMP)")) {
-                    this->screen = Screen::Editor;
-                }
 
                 ImGui::EndMenu();
             }

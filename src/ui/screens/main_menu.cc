@@ -57,7 +57,7 @@ namespace CardflashUI {
 
         ImGui::Text("Welcome back!");
 
-        if (ImGui::Button("Create")) {}
+        if (ImGui::Button("Create")) this->screen = Screen::Editor;
         ImGui::SetItemTooltip("Create a new set.");
 
         ImGui::SameLine();

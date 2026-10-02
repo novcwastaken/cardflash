@@ -1,10 +1,30 @@
 #include "../state.hh"
 
 #include "imgui.h"
+
 #include <cstring>
 #include <iostream>
 
+static bool SHOW_NO_CARDS_POPUP = false;
+
 namespace CardflashUI {
+    void NoCardsPopup() {
+        if (SHOW_NO_CARDS_POPUP) ImGui::OpenPopup("No cards!");
+
+        if (ImGui::BeginPopupModal("No cards!")) {
+            ImGui::Text(
+                "There must be at least 1 card, and no "
+                "card can have empty front or back side"
+            );
+            if (ImGui::Button("Sorry mommy...")) {
+                SHOW_NO_CARDS_POPUP = false;
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::EndPopup();
+        }
+    }
+
     void UiState::Editor(int window_width, int window_height, int top_bar_height) {
         // If no traked value is set then prompt the user to
         // create a new one
@@ -17,6 +37,7 @@ namespace CardflashUI {
 
             ImGui::OpenPopup("Create New Set");
 
+            // Popup declaration
             if (ImGui::BeginPopupModal("Create New Set", NULL)) {
                 ImGui::InputTextWithHint(
                     "##newset_popup_title",
@@ -53,6 +74,9 @@ namespace CardflashUI {
                     memset(title,0,sizeof(title));
                     memset(author,0,sizeof(author));
                     memset(subject,0,sizeof(subject));
+
+                    this->editor_front_bufs.clear();
+                    this->editor_back_bufs.clear();
                 }
 
                 ImGui::EndPopup();
@@ -60,9 +84,9 @@ namespace CardflashUI {
             return;
         }
         assert(this->tracked_set.has_value());
+        NoCardsPopup();
 
         // ==== LEFT SIDE: Card editor ====
-
         ImGui::SetNextWindowPos(ImVec2(0, top_bar_height));
         ImGui::SetNextWindowSize(ImVec2(window_width*0.8, window_height));
         ImGuiWindowFlags flags =
@@ -72,7 +96,7 @@ namespace CardflashUI {
         ImGui::Begin("Card List", nullptr, flags);
 
         // If the set has cards load that into the buffers
-        // if not then dont
+        // if not then dont. This should only happen once!
         if (this->tracked_set.value()->IsSetFinalized()) {
             const std::vector<Cardflash::Card>& ref_cards = this->tracked_set.value()->GetRefCards();
             if (
@@ -81,7 +105,12 @@ namespace CardflashUI {
                     || ref_cards.size() != this->editor_back_bufs.size()
                 )
             ) {
-                std::cout << "Resized!" << std::endl;
+                std::cout << "Resized editor buffers!" << std::endl;
+
+                strcpy(this->editor_title.begin(), this->tracked_set.value()->title.c_str());
+                strcpy(this->editor_author.begin(), this->tracked_set.value()->author.c_str());
+                strcpy(this->editor_subject.begin(), this->tracked_set.value()->subject.c_str());
+
                 this->editor_front_bufs.resize(ref_cards.size());
                 this->editor_back_bufs.resize(ref_cards.size());
 
@@ -100,38 +129,26 @@ namespace CardflashUI {
         if (ImGui::Button("Remove last card")) {
             this->editor_front_bufs.pop_back();
             this->editor_back_bufs.pop_back();
+
+            // Make sure to not load the cards from the open set
+            if (this->editor_front_bufs.empty()) {
+                this->editor_front_bufs.resize(1);
+                this->editor_back_bufs.resize(1);
+            }
         }
         ImGui::SameLine();
-        if (ImGui::Button("Save")) {
-            if (this->editor_front_bufs.empty()) {
-                std::cout << "Can't save empty set!" << std::endl;
-            }
+        if (ImGui::Button("Save") && !this->SaveTracked()) SHOW_NO_CARDS_POPUP = true;
 
-            this->tracked_set.value()->Clear();
-            for (size_t i = 0; i < this->editor_front_bufs.size(); ++i) {
-                this->tracked_set
-                    .value()
-                    ->Expand(
-                        Cardflash::Card(
-                            std::string(this->editor_front_bufs[i].data()),
-                            std::string(this->editor_back_bufs[i].data())
-                        )
-                    );
-            }
-
-            if (this->editor_temp_set.has_value()) {
-                this->man.AddSet(std::move(this->editor_temp_set.value()));
-                this->editor_temp_set = std::nullopt;
-
-                this->tracked_set = this->man.GetLastSet();
-            }
-
-            this->man.Save(this->tracked_set.value());
+        ImGui::SameLine();
+        if (ImGui::Button("Exit editor")) {
+            if (this->SaveTracked()) this->screen = Screen::SetView;
+            else SHOW_NO_CARDS_POPUP = true;
         }
 
-        if (ImGui::BeginTable("Cards", 2)) {
-            ImGui::TableSetupColumn("Front");
-            ImGui::TableSetupColumn("Back");
+        if (ImGui::BeginTable("Cards", 3)) {
+            ImGui::TableSetupColumn("Front###editortablefrontcolumthing");
+            ImGui::TableSetupColumn("Back###editortablebackcolumthing");
+            ImGui::TableSetupColumn("Controls###editortablecontrolcolumthing");
             ImGui::TableHeadersRow();
 
             for (size_t i = 0; i < this->editor_front_bufs.size(); i++) {
@@ -156,6 +173,43 @@ namespace CardflashUI {
                     1024
                 );
 
+                ImGui::TableNextColumn();
+                if (ImGui::ArrowButton("Up", ImGuiDir_Up) && i > 0) {
+                    std::array<char, 1024> previous_front = std::move(this->editor_front_bufs[i - 1]);
+                    std::array<char, 1024> previous_back = std::move(this->editor_back_bufs[i - 1]);
+
+                    this->editor_front_bufs[i - 1] = std::move(this->editor_front_bufs[i]);
+                    this->editor_back_bufs[i - 1] = std::move(this->editor_back_bufs[i]);
+
+                    this->editor_front_bufs[i] = std::move(previous_front);
+                    this->editor_back_bufs[i] = std::move(previous_back);
+                }
+
+                ImGui::SameLine();
+                if (ImGui::ArrowButton("Down", ImGuiDir_Down) && i != this->editor_front_bufs.size() - 1) {
+                    std::array<char, 1024> next_front = std::move(this->editor_front_bufs[i + 1]);
+                    std::array<char, 1024> next_back = std::move(this->editor_back_bufs[i + 1]);
+
+                    this->editor_front_bufs[i + 1] = std::move(this->editor_front_bufs[i]);
+                    this->editor_back_bufs[i + 1] = std::move(this->editor_back_bufs[i]);
+
+                    this->editor_front_bufs[i] = std::move(next_front);
+                    this->editor_back_bufs[i] = std::move(next_back);
+                }
+
+                ImGui::SameLine();
+                if (ImGui::Button("Delete")) {
+                    this->editor_front_bufs.erase(this->editor_front_bufs.begin() + i);
+                    this->editor_back_bufs.erase(this->editor_back_bufs.begin() + i);
+
+                    if (this->editor_back_bufs.empty()) {
+                        // Make sure there is never 0 cards as that would
+                        // trigger copying the tracked objet into these buffers
+                        this->editor_front_bufs.resize(1);
+                        this->editor_back_bufs.resize(1);
+                    }
+                }
+
 
                 ImGui::PopID();
             }
@@ -164,19 +218,32 @@ namespace CardflashUI {
         }
         ImGui::End();
 
-        // -------------
+        // ==== RIGHT SIDE: Metadata ====
 
         ImGui::SetNextWindowPos(ImVec2(window_width*0.8, top_bar_height));
         ImGui::SetNextWindowSize(ImVec2(window_width*0.2, window_height));
+        ImGui::Begin("Metadata", nullptr, flags);
 
-        ImGui::Begin("Card Inspector", nullptr, flags);
+        ImGui::InputTextWithHint(
+            "###editor_title",
+            "Title",
+            &(this->editor_title[0]),
+            sizeof(this->editor_title)
+        );
 
-        char front[128] = "";
-        ImGui::InputTextWithHint("##01", "Front", front, IM_COUNTOF(front));
+        ImGui::InputTextWithHint(
+            "###editor_author",
+            "Author",
+            &(this->editor_author[0]),
+            sizeof(this->editor_author)
+        );
 
-        char back[128] = "";
-        // ImGui::InputTextWithHint("##02", "Back", back, IM_COUNTOF(back));
-        ImGui::InputTextMultiline("##source", back, IM_COUNTOF(back), ImVec2(-FLT_MIN, ImGui::GetTextLineHeight() * 16), flags);
+        ImGui::InputTextWithHint(
+            "###editor_subject",
+            "Subject",
+            &(this->editor_subject[0]),
+            sizeof(this->editor_subject)
+        );
 
         ImGui::End();
     }
