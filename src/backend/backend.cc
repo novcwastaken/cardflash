@@ -49,7 +49,7 @@ namespace Cardflash {
 
 
     // class Card
-    inline Card::Card(std::string front, std::string back) {
+    Card::Card(std::string front, std::string back) {
         if (front.length() == 0 || back.length() == 0)
             throw EmptyString("Tried to init a Card with the front or back being an empty string");
 
@@ -581,13 +581,9 @@ namespace Cardflash {
         this->cards.insert(this->cards.end(), with.begin(), with.end());
     }
 
-    void Set::Pop() {
-        if (!this->are_cards_ready) {}
-
-        this->cards.pop_back();
-        if (this->cards.size() == 0) {
-            this->are_cards_ready = false;
-        }
+    void Set::Clear() {
+        this->cards.clear();
+        this->are_cards_ready = false;
     }
 
     const std::vector<Card>& Set::GetRefCards() const {

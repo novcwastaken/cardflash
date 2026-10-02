@@ -100,6 +100,25 @@ namespace Cardflash {
         return ptr;
     }
 
+    Set* SetManager::GetLastSet() {
+        if (this->sets.size() == 0) throw (std::out_of_range(
+            "GetSet: tried to get a set with a set size of 0."
+        ));
+
+        if (this->IsScanning()) throw (ScanRunning());
+
+        this->DisableBuffer();
+
+        Set* ptr = &this->sets[this->sets.size() - 1];
+        try {
+            (this->refcount.at(ptr))++;
+        } catch (const std::out_of_range& _) {
+            this->refcount.insert( {ptr, 1} );
+        }
+
+        return ptr;
+    }
+
     void SetManager::DropSetRef(Set *set) {
         try {
             // A number describing how many handed out pointers

@@ -87,7 +87,7 @@ namespace CardflashUI {
 
     void UiState::OpenEditor() {
         if (!this->tracked_set.has_value()) {
-            std::cout << "Should open popup" << std::endl;
+            // std::cout << "Should open popup" << std::endl;
 
             static bool is_newset_popup_open = true;
             static char title[512] = "";

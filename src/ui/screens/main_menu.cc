@@ -27,12 +27,12 @@ namespace CardflashUI {
         ImGui::PopID();
 
         ImGui::TableNextColumn();
-        ImGui::PushID(index);
+        ImGui::PushID(index + questions);
         ImGui::Selectable(author.c_str(), selected);
         ImGui::PopID();
 
         ImGui::TableNextColumn();
-        ImGui::PushID(index);
+        ImGui::PushID(index + questions * 2);
         ImGui::Selectable(subject.c_str(), selected);
         ImGui::PopID();
 

@@ -66,7 +66,7 @@ namespace CardflashUI {
 
                 ImGui::Separator();
                 if (ImGui::MenuItem("Editor (TEMP)")) {
-                    this->OpenEditor();
+                    this->screen = Screen::Editor;
                 }
 
                 ImGui::EndMenu();

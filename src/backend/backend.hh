@@ -133,11 +133,8 @@ namespace Cardflash {
 
             const void Expand(std::vector<Card>& with);
 
-            /// Pop the last added card
-            ///
-            /// Throws SetNotFinalized is the set is not finalized
-            /// (aka there isn't any cards)
-            void Pop();
+            /// Clears are the stored cards
+            void Clear();
 
             const void SetLastOpenedTimestamp();
 
@@ -285,6 +282,21 @@ namespace Cardflash {
             /// must be returned with DropSetRef before a new ref
             /// to sets could be acquired!
             Set* GetSet(size_t index);
+
+            /// Gets a mutable reference the last Se in the Sets. Disables
+            /// starting a new scan until all the references has been
+            /// dropped (see DropRef()).
+            ///
+            /// Throws ScanRunning if a scan is running.
+            ///
+            /// Throws an std::out_of_range if there aren't any
+            /// elements in the sets.
+            ///
+            /// No ref by GetSetsRef should be active at the same time
+            /// a Set reference is live. This is not enforced, but all Sets
+            /// must be returned with DropSetRef before a new ref
+            /// to sets could be acquired!
+            Set* GetLastSet();
 
             /// Removes the internal reference counting of a Set.
             ///
