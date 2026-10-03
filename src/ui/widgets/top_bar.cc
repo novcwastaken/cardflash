@@ -12,15 +12,6 @@ namespace CardflashUI {
 
         if (ImGui::BeginMainMenuBar()) {
             if (ImGui::BeginMenu("Cardflash")) {
-                if (ImGui::MenuItem("Main Menu")) {
-                    // TODO: Not blindly set this if there is any unsaved
-                    // progress
-                    if (this->tracked_set.has_value()) {
-                        this->DropTrackedSet();
-                    }
-                    this->screen = Screen::Menu;
-                }
-
                 if (ImGui::MenuItem("New Set...")) {
                     this->DropTrackedSet();
                     this->screen = Screen::Editor;
@@ -33,9 +24,9 @@ namespace CardflashUI {
                         ImGui::PushID(i);
                         if (ImGui::MenuItem(this->ordered_sets[i].title.c_str())) {
                             if (this->tracked_set.has_value())
-                                this->man.DropSetRef(this->tracked_set.value());
-                            UUIDv4::UUID target_uuid = this->ordered_sets[i].GetUUID();
+                                this->DropTrackedSet();
 
+                            UUIDv4::UUID target_uuid = this->ordered_sets[i].GetUUID();
                             auto setref = this->man.GetSetsRef();
                             for (size_t ref_i = 0; ref_i < setref.size(); ++ref_i) {
                                 if (setref[ref_i].GetUUID() == target_uuid) {
@@ -53,8 +44,7 @@ namespace CardflashUI {
 
                 // Not sure if this will actually be implemented, we'll see
                 // ImGui::Separator();
-                // ImGui::MenuItem("Import Set...");
-                // ImGui::MenuItem("Export Set..."); // TODO: Disable (gray out) when the currently opened set is null
+                // ImGui::MenuItem("Export Set...");
 
                 ImGui::Separator();
                 ImGui::MenuItem("Preferences");
@@ -65,6 +55,15 @@ namespace CardflashUI {
                 };
 
                 ImGui::EndMenu();
+            }
+
+            if (ImGui::MenuItem("Main Menu")) {
+                // TODO: Not blindly set this if there is any unsaved
+                // progress
+                if (this->tracked_set.has_value()) {
+                    this->DropTrackedSet();
+                }
+                this->screen = Screen::Menu;
             }
 
             final_height = ImGui::GetWindowSize().y;

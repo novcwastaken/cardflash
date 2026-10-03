@@ -66,7 +66,7 @@ namespace CardflashUI {
             [] (const Cardflash::Set& lhs, const Cardflash::Set& rhs) {
                 return
                 lhs.GetLastOpenedTimestamp()
-                    < rhs.GetLastOpenedTimestamp();
+                    > rhs.GetLastOpenedTimestamp();
             }
         );
     }

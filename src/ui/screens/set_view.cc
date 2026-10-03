@@ -20,7 +20,8 @@ namespace CardflashUI {
     void UiState::SureToEditPopup() {
         if (SHOW_EDIT_CONFIRMATION) ImGui::OpenPopup("suretoedit");
 
-        if (ImGui::BeginPopupModal("Are you sure?###suretoedit")) {
+        auto flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
+        if (ImGui::BeginPopupModal("Are you sure?###suretoedit", NULL, flags)) {
             ImGui::Text(
                 "Editing a set will wipe all statistics data."
                 "\nAre you sure you want to proceed?"

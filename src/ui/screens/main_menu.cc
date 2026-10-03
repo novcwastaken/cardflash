@@ -57,7 +57,7 @@ namespace CardflashUI {
 
         ImGui::Text("Welcome back!");
 
-        if (ImGui::Button("Create")) this->screen = Screen::Editor;
+        if (ImGui::Button("Create new set")) this->screen = Screen::Editor;
         ImGui::SetItemTooltip("Create a new set.");
 
         ImGui::SameLine();
@@ -86,12 +86,13 @@ namespace CardflashUI {
 
         // Recents
         if (ImGui::BeginTable("main_menu_recents_table", 5)) {
-            // Header
-            ImGui::TableSetupColumn("Name");
-            ImGui::TableSetupColumn("Author");
-            ImGui::TableSetupColumn("Subject");
-            ImGui::TableSetupColumn("Cards");
-            ImGui::TableSetupColumn("Last opened");
+            // == Header ==
+            auto table_flags = ImGuiTableColumnFlags_WidthFixed;
+            ImGui::TableSetupColumn("Name", table_flags);
+            ImGui::TableSetupColumn("Author", table_flags);
+            ImGui::TableSetupColumn("Subject", table_flags);
+            ImGui::TableSetupColumn("Cards", table_flags, window_width * 0.05);
+            ImGui::TableSetupColumn("Last opened", table_flags);
 
             ImGui::TableHeadersRow();
 

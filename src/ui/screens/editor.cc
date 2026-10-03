@@ -11,12 +11,12 @@ namespace CardflashUI {
     void NoCardsPopup() {
         if (SHOW_NO_CARDS_POPUP) ImGui::OpenPopup("No cards!");
 
-        // TODO: Make the popup not resizable
         auto flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
         if (ImGui::BeginPopupModal("No cards!", NULL, flags)) {
             ImGui::Text(
                 "There must be at least 1 card, and no "
-                "card can have empty front or back side"
+                "card can have empty front or back side, "
+                "and the title and author field musn't be empty either!"
             );
             if (ImGui::Button("Sure thing...")) {
                 SHOW_NO_CARDS_POPUP = false;
@@ -27,62 +27,66 @@ namespace CardflashUI {
         }
     }
 
-    void UiState::Editor(int window_width, int window_height, int top_bar_height) {
-        // If no traked value is set then prompt the user to
-        // create a new one
-        if (!this->tracked_set.has_value()) {
-            // std::cout << "Should open popup" << std::endl;
+    void UiState::CreateNewSet() {
+        static std::array<char, 1024> title;
+        static std::array<char, 1024> author;
+        static std::array<char, 1024> subject;
 
-            static char title[512] = "";
-            static char author[512] = "";
-            static char subject[512] = "";
+        auto flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+        ImGui::SetNextWindowSize(ImVec2(300, 150));
+        if (ImGui::BeginPopupModal("Create New Set", NULL, flags)) {
+            ImGui::PushItemWidth(280);
+            ImGui::InputTextWithHint(
+                "##newset_popup_title",
+                "Title (required)",
+                &(title[0]),
+                1024
+            );
+            ImGui::InputTextWithHint(
+                "##newset_popup_author",
+                "Author (required)",
+                &(author[0]),
+                1024
+            );
+            ImGui::InputTextWithHint(
+                "##newset_popup_subject",
+                "Subject (optional)",
+                &(subject[0]),
+                1024
+            );
+            ImGui::PopItemWidth();
 
-            ImGui::OpenPopup("Create New Set");
-
-            // Popup declaration
-            if (ImGui::BeginPopupModal("Create New Set", NULL)) {
-                ImGui::InputTextWithHint(
-                    "##newset_popup_title",
-                    "Title (required)",
-                    &(title[0]),
-                    512
+            if ( ImGui::Button("Create new set")
+                && title[0] != '\0'
+                && author[0] != '\0'
+            ) {
+                auto set = Cardflash::Set(
+                    std::string(&title.front()),
+                    std::string(&author.front()),
+                    std::string(&subject.front())
                 );
-                ImGui::InputTextWithHint(
-                    "##newset_popup_author",
-                    "Title (required)",
-                    &(author[0]),
-                    512
-                );
-                ImGui::InputTextWithHint(
-                    "##newset_popup_subject",
-                    "Subject (optional)",
-                    &(subject[0]),
-                    512
-                );
 
-                if (
-                    ImGui::Button("Create new set")
-                    && title[0] != '\0'
-                    && author[0] != '\0'
-                ) {
-                    auto set = Cardflash::Set(
-                        std::string(title),
-                        std::string(author),
-                        std::string(subject)
-                    );
+                this->editor_title = std::move(title);
+                this->editor_author = std::move(author);
+                this->editor_subject = std::move(subject);
+                title.fill(0);
+                author.fill(0);
+                subject.fill(0);
 
-                    this->SetSetAsTracked(std::move(set));
+                this->SetSetAsTracked(std::move(set));
 
-                    memset(title,0,sizeof(title));
-                    memset(author,0,sizeof(author));
-                    memset(subject,0,sizeof(subject));
-
-                    this->editor_front_bufs.clear();
-                    this->editor_back_bufs.clear();
-                }
-
-                ImGui::EndPopup();
+                this->editor_front_bufs.clear();
+                this->editor_back_bufs.clear();
             }
+
+            ImGui::EndPopup();
+        }
+    }
+
+    void UiState::Editor(int window_width, int window_height, int top_bar_height) {
+        if (!this->tracked_set.has_value()) {
+            ImGui::OpenPopup("Create New Set");
+            this->CreateNewSet();
             return;
         }
         assert(this->tracked_set.has_value());
@@ -128,7 +132,8 @@ namespace CardflashUI {
             this->editor_back_bufs.resize(this->editor_back_bufs.size() + 1);
         }
         ImGui::SameLine();
-        if (ImGui::Button("Remove last card")) {
+        if (!this->editor_front_bufs.empty() && ImGui::Button("Remove last card")) {
+
             this->editor_front_bufs.pop_back();
             this->editor_back_bufs.pop_back();
 
@@ -148,17 +153,35 @@ namespace CardflashUI {
         }
 
         if (ImGui::BeginTable("Cards", 3)) {
-            ImGui::TableSetupColumn("Front###editortablefrontcolumthing");
-            ImGui::TableSetupColumn("Back###editortablebackcolumthing");
-            ImGui::TableSetupColumn("Controls###editortablecontrolcolumthing");
+            // == HEADER ==
+            auto table_flags = ImGuiTableColumnFlags_WidthFixed;
+            ImGui::TableSetupColumn(
+                "Front###editortablefrontcolumthing",
+                table_flags,
+                window_width * 0.8 * 0.4
+            );
+            ImGui::TableSetupColumn(
+                "Back###editortablebackcolumthing",
+                table_flags,
+                window_width * 0.8 * 0.4
+            );
+
+            ImGui::TableSetupColumn(
+                "Controls###editortablecontrolcolumthing",
+                table_flags,
+                window_width * 0.8 * 0.2
+            );
             ImGui::TableHeadersRow();
 
+            // == ROWS ==
             for (size_t i = 0; i < this->editor_front_bufs.size(); i++) {
-                ImGui::PushID(i);
                 ImGui::TableNextRow();
+                ImGui::PushID(i);
+
+                ImGui::TableNextColumn();
+                ImGui::PushItemWidth(window_width * 0.8 * 0.3999);
 
                 // Front
-                ImGui::TableNextColumn();
                 ImGui::InputTextWithHint(
                     "##front",
                     "Front...",
@@ -168,6 +191,8 @@ namespace CardflashUI {
 
                 // Back
                 ImGui::TableNextColumn();
+
+                ImGui::PushItemWidth(window_width * 0.8 * 0.3999);
                 ImGui::InputTextWithHint(
                     "##back",
                     "Back...",
@@ -212,7 +237,6 @@ namespace CardflashUI {
                     }
                 }
 
-
                 ImGui::PopID();
             }
 
@@ -226,6 +250,7 @@ namespace CardflashUI {
         ImGui::SetNextWindowSize(ImVec2(window_width*0.2, window_height));
         ImGui::Begin("Metadata", nullptr, flags);
 
+        ImGui::PushItemWidth(window_width * 0.18);
         ImGui::InputTextWithHint(
             "###editor_title",
             "Title",
@@ -246,6 +271,7 @@ namespace CardflashUI {
             &(this->editor_subject[0]),
             sizeof(this->editor_subject)
         );
+        ImGui::PopItemWidth();
 
         ImGui::End();
     }
