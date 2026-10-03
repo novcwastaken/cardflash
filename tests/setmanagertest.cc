@@ -15,7 +15,12 @@ TEST_CASE("Set manager", "[setmanager]") {
 #if GENERAL_USECASE_1
     SECTION("General usecase 1") {
         Set one = Set("John Doe", "Very Cool Title", "Cool Subject");
-        one.Expand(Card("Front", "Back"));
+        one.Expand(Card("Front", "Back", CardLearningStatus::Know));
+        one.Expand(Card("Front", "Back", CardLearningStatus::Learning));
+        one.Expand(Card("Front", "Back", CardLearningStatus::Know));
+        one.Expand(Card("Front", "Back", CardLearningStatus::Learning));
+        one.Expand(Card("Front", "Back", CardLearningStatus::Learning));
+        one.Expand(Card("We", "mow"));
         one.SetLastOpenedTimestamp();
         REQUIRE(one.IsSetFinalized());
         man.AddSet(one);

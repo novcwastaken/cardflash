@@ -79,7 +79,11 @@ namespace CardflashUI {
     }
 
     void UiState::DropTrackedSet() {
-        assert(this->tracked_set.has_value());
+        if (!this->tracked_set.has_value()) return;
+
+        if (this->editor_temp_set.has_value()) this->editor_temp_set = std::nullopt;
+        else this->man.DropSetRef(this->tracked_set.value());
+        this->tracked_set = std::nullopt;
 
         // Clear editor buffers
         this->editor_temp_set = std::nullopt;
@@ -89,8 +93,10 @@ namespace CardflashUI {
         this->editor_author.fill(0);
         this->editor_title.fill(0);
 
-        this->man.DropSetRef(this->tracked_set.value());
-        this->tracked_set = std::nullopt;
+        // Clear set view stuff
+        this->set_view_should_update_statistics = true;
+        this->set_view_cards_know = 0;
+        this->set_view_cards_learning = 0;
     }
 
     void UiState::SetSetAsTracked(Cardflash::Set set) {
@@ -147,5 +153,33 @@ namespace CardflashUI {
         this->man.sets_changed = true;
 
         return true;
+    }
+
+    void UiState::GetTrackedSetStatistics() {
+        if (!this->set_view_should_update_statistics) return;
+        assert(this->tracked_set.has_value());
+
+        this->set_view_cards_know = 0;
+        this->set_view_cards_learning = 0;
+
+        assert(this->tracked_set.value()->IsSetFinalized());
+
+        for (const Cardflash::Card& card : this->tracked_set.value()->GetRefCards()) {
+            switch (card.learning_status) {
+                case Cardflash::CardLearningStatus::Know:
+                    ++this->set_view_cards_know;
+                    // std::cout << "lstatus: know" << std::endl;
+                    break;
+                case Cardflash::CardLearningStatus::Learning:
+                    ++this->set_view_cards_learning;
+                    // std::cout << "lstatus: learn" << std::endl;
+                    break;
+                default:
+                    // std::cout << "lstatus: idfk?" << std::endl;
+                    break;
+            }
+        }
+
+        this->set_view_should_update_statistics = false;
     }
 }

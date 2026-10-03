@@ -11,12 +11,14 @@ namespace CardflashUI {
     void NoCardsPopup() {
         if (SHOW_NO_CARDS_POPUP) ImGui::OpenPopup("No cards!");
 
-        if (ImGui::BeginPopupModal("No cards!")) {
+        // TODO: Make the popup not resizable
+        auto flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
+        if (ImGui::BeginPopupModal("No cards!", NULL, flags)) {
             ImGui::Text(
                 "There must be at least 1 card, and no "
                 "card can have empty front or back side"
             );
-            if (ImGui::Button("Sorry mommy...")) {
+            if (ImGui::Button("Sure thing...")) {
                 SHOW_NO_CARDS_POPUP = false;
                 ImGui::CloseCurrentPopup();
             }
@@ -140,7 +142,7 @@ namespace CardflashUI {
         if (ImGui::Button("Save") && !this->SaveTracked()) SHOW_NO_CARDS_POPUP = true;
 
         ImGui::SameLine();
-        if (ImGui::Button("Exit editor")) {
+        if (ImGui::Button("To overview (exit editor)")) {
             if (this->SaveTracked()) this->screen = Screen::SetView;
             else SHOW_NO_CARDS_POPUP = true;
         }

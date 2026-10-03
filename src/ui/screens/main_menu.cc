@@ -22,27 +22,27 @@ namespace CardflashUI {
         ImGui::TableNextRow();
 
         ImGui::TableNextColumn();
-        ImGui::PushID(index);
+        ImGui::PushID(1 + index);
         ImGui::Selectable(name.c_str(), selected);
         ImGui::PopID();
 
         ImGui::TableNextColumn();
-        ImGui::PushID(index + questions);
+        ImGui::PushID(1 + index + questions);
         ImGui::Selectable(author.c_str(), selected);
         ImGui::PopID();
 
         ImGui::TableNextColumn();
-        ImGui::PushID(index + questions * 2);
+        ImGui::PushID(1 + index + questions * 2);
         ImGui::Selectable(subject.c_str(), selected);
         ImGui::PopID();
 
         ImGui::TableNextColumn();
-        ImGui::PushID(index);
+        ImGui::PushID(1 + index + questions * 3);
         ImGui::Selectable(std::to_string(questions).c_str(), selected);
         ImGui::PopID();
 
         ImGui::TableNextColumn();
-        ImGui::PushID(index);
+        ImGui::PushID(1 + index + questions * 4);
         ImGui::Selectable(last_opened.c_str(), selected);
         ImGui::PopID();
     }

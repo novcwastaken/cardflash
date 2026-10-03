@@ -3,12 +3,48 @@
 #include "backend/backend.hh"
 #include "imgui.h"
 #include <cassert>
+#include <numbers>
 
 using namespace ImGui;
 
+// Constants for the custom statistics draw commands
+constexpr float CIRCLE_LINE_THICKNESS = 15;
+// Ofc cpp would have a type template for PI.
+// idfk what constexpr, it sounds cooler
+constexpr float PI = std::numbers::pi_v<float>;
+constexpr float RADIAN_OFFSET = PI * -0.5f;
+
+static bool SHOW_EDIT_CONFIRMATION = false;
+
 namespace CardflashUI {
+    void UiState::SureToEditPopup() {
+        if (SHOW_EDIT_CONFIRMATION) ImGui::OpenPopup("suretoedit");
+
+        if (ImGui::BeginPopupModal("Are you sure?###suretoedit")) {
+            ImGui::Text(
+                "Editing a set will wipe all statistics data."
+                "\nAre you sure you want to proceed?"
+            );
+
+            if (ImGui::Button("Yes")) {
+                SHOW_EDIT_CONFIRMATION = false;
+                this->screen = Screen::Editor;
+                ImGui::CloseCurrentPopup();
+            }
+            SameLine();
+            if (Button("I would rather not")) {
+                SHOW_EDIT_CONFIRMATION = false;
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::EndPopup();
+        }
+    }
+
     void UiState::SetView(int window_width, int window_height, int top_bar_height) {
         assert(this->tracked_set.has_value());
+        this->GetTrackedSetStatistics();
+        this->SureToEditPopup();
 
         // Fullscreen the window
         SetNextWindowPos(ImVec2(0, top_bar_height));
@@ -23,7 +59,6 @@ namespace CardflashUI {
         PushFont(NULL, style.FontSizeBase * 4.0f);
         Text("%s", this->tracked_set.value()->title.c_str());
         PopFont();
-
         Text(
             "%s - %s",
             this->tracked_set.value()->author.c_str(),
@@ -31,8 +66,58 @@ namespace CardflashUI {
         );
 
         // ==== Stats (TODO!) ====
+        ImDrawList* draw_list = GetWindowDrawList();
+        ImVec2 p = GetCursorScreenPos();
+        ImVec2 center = p;
+        center.x += 50;
+        center.y += 50;
 
-        // Cirlcle for known/learning/unknown right next to it explaining it
+        // == Cirlcle for known/learning/unknown right next to it explaining it ==
+        float known_percentage, learning_percentage;
+        // Make sure we aren't dividing by 0
+        if (this->set_view_cards_know == 0) known_percentage = 0;
+        else known_percentage = this->set_view_cards_know
+            / static_cast<float>(this->tracked_set.value()->GetRefCards().size());
+
+        if (this->set_view_cards_learning == 0) learning_percentage = 0;
+        else learning_percentage = this->set_view_cards_learning
+            / static_cast<float>(this->tracked_set.value()->GetRefCards().size());
+
+        // Draw the full grey circle (for unknown)
+        // We're using ArctTo instead of AddCircle because this way we can
+        // make it a store. We're also using the fast variant as we're
+        // drawing the full circle, the loss of precision is fine.
+        draw_list->PathArcToFast(
+            center,
+            50 - CIRCLE_LINE_THICKNESS,
+            0,
+            12
+        );
+        draw_list->PathStroke(IM_COL32(115, 121, 148, 255), CIRCLE_LINE_THICKNESS);
+
+        // std::cout << known_percentage << this->tracked_set.value()->GetRefCards().size() << this->set_view_cards_know << std::endl;
+        // Draw the already known circle part with green
+        draw_list->PathArcTo(
+            center,
+            50 - CIRCLE_LINE_THICKNESS,
+            RADIAN_OFFSET,
+            (2*PI * known_percentage) + RADIAN_OFFSET
+        );
+        draw_list->PathStroke(IM_COL32(166, 209, 137, 255), CIRCLE_LINE_THICKNESS);
+
+        // Draw the still learning circle part with red
+        draw_list->PathArcTo(
+            center,
+            50 - CIRCLE_LINE_THICKNESS,
+            // Start where the know circle ends
+            (2*PI * known_percentage) + RADIAN_OFFSET,
+            (2*PI * known_percentage) + (2*PI * learning_percentage) + RADIAN_OFFSET
+        );
+        draw_list->PathStroke(IM_COL32(231, 130, 132, 255), CIRCLE_LINE_THICKNESS);
+
+        Dummy(ImVec2(100, 100));
+        SetItemTooltip("Shows how much card you know:\nGREY: You haven't told us\n"
+            "RED: Still learning\nGREEN: Already know");
 
         // ==== Cards ====
         SeparatorText("Cards");
@@ -42,7 +127,7 @@ namespace CardflashUI {
         }
         SameLine();
         if(Button("Edit")) {
-            this->screen = Screen::Editor;
+            SHOW_EDIT_CONFIRMATION = true;
         }
 
         BeginTable("setview_card_preview", 2);
@@ -60,12 +145,12 @@ namespace CardflashUI {
             ImGui::TableNextRow();
 
             ImGui::TableNextColumn();
-            ImGui::PushID(i);
+            ImGui::PushID(i + 1);
             ImGui::Selectable(cards[i].GetFront().c_str(), false);
             ImGui::PopID();
 
             ImGui::TableNextColumn();
-            ImGui::PushID(i);
+            ImGui::PushID(i + 1);
             ImGui::Selectable(
                set_view_is_back_revealed[i].value || set_view_reveal_all
                 ? cards[i].GetBack().c_str()

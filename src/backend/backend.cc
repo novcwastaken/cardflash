@@ -261,8 +261,14 @@ namespace Cardflash {
         for (const auto byte : learning_status_bytes) {
             // std::cout << "Lstatus Deser: byte: " << std::bitset<8>(byte) << std::endl;
 
+            // 11001100
+            // >> 6 00000011
+            // >> 4 00000000
+            // >> 2 00000011
+            // >> 0 00000000
             for (int8_t bit_offset = 6; bit_offset >= 0; bit_offset -= 2) {
-                uint8_t raw = (byte >> (bit_offset)) & 0b00000011;
+                uint8_t raw = (byte >> bit_offset) & 0b00000011;
+                // std::cout << "Lstatus deser: raw bit: " << std::bitset<2>(raw) << '\t';
 
                 if (raw != 0 && learning_status_finalized)
                     throw(DeserializationError(
@@ -276,6 +282,18 @@ namespace Cardflash {
                     //     << "Pushing Lstatus Deser: bit offset: "
                     //     << (int)bit_offset << "\tpushed: "
                     //     << std::bitset<2>(raw) << std::endl;
+
+                    // switch (static_cast<CardLearningStatus>(raw)) {
+                    //     case CardLearningStatus::Unknown:
+                    //         std::cout << "Uknown" << std::endl;
+                    //         break;
+                    //     case CardLearningStatus::Know:
+                    //         std::cout << "Know" << std::endl;
+                    //         break;
+                    //     case CardLearningStatus::Learning:
+                    //         std::cout << "Learning" << std::endl;
+                    //         break;
+                    // }
                 }
                 else learning_status_finalized = true;
             }
@@ -512,10 +530,15 @@ namespace Cardflash {
             // Iter to the current byte
             auto lstatus_byte_iter = lstatus_iter + lstatus_byte_offset;
 
+            // std::cout << std::bitset<8>(static_cast<uint8_t>(this->cards[i].learning_status)
+            // << (6 - lstatus_bit_offset)) << " ";
+
             // Modify the correct bit of the byte
             *lstatus_byte_iter |=
                 static_cast<uint8_t>(this->cards[i].learning_status)
                 << (6 - lstatus_bit_offset);
+
+            // std::cout << std::bitset<8>(*lstatus_byte_iter) << std::endl;
 
             // Advance the offsets
             lstatus_bit_offset += 2;

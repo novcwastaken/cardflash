@@ -24,6 +24,9 @@ namespace CardflashUI {
 
     struct Bool { bool value = false; };
 
+    // This should be a container for different state objects
+    // which store a view's state and everything, but
+    // i cannot be bothered to split it, so comments it is.
     class UiState {
         Screen screen = Screen::Menu;
         Cardflash::SetManager man = Cardflash::SetManager();
@@ -39,6 +42,7 @@ namespace CardflashUI {
         void UpdateOrderedSets();
         // ==== !MAIN MENU ====
 
+        // Every screen but main menu uses these:
         void SetTrackedSet(Cardflash::Set* set);
         void DropTrackedSet();
         std::optional<Cardflash::Set*> tracked_set = std::nullopt;
@@ -46,6 +50,16 @@ namespace CardflashUI {
         // ==== SET VIEW ====
         std::vector<Bool> set_view_is_back_revealed;
         bool set_view_reveal_all = false;
+        /// Takes care of updating the statisic values (extracing
+        /// them from the tracked set into this state).
+        /// Can be called every frame, but will only do work
+        /// set_view_should_update_statistics is true.
+        ///
+        /// Asserts tracked_set.has_value()!
+        void GetTrackedSetStatistics();
+        bool set_view_should_update_statistics = true;
+        int set_view_cards_know = 0, set_view_cards_learning = 0;
+        void SureToEditPopup();
         // ==== !SET VIEW ====
 
         // ==== EDITOR ====

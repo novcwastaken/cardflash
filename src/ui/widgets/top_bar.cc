@@ -21,7 +21,10 @@ namespace CardflashUI {
                     this->screen = Screen::Menu;
                 }
 
-                if (ImGui::MenuItem("New Set...")) this->screen = Screen::Editor;
+                if (ImGui::MenuItem("New Set...")) {
+                    this->DropTrackedSet();
+                    this->screen = Screen::Editor;
+                }
 
                 if (ImGui::BeginMenu("Open Recent Set")) {
                     this->UpdateOrderedSets();
