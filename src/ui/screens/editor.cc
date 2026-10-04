@@ -14,11 +14,12 @@ namespace CardflashUI {
         auto flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
         if (ImGui::BeginPopupModal("No cards!", NULL, flags)) {
             ImGui::Text(
-                "There must be at least 1 card, and no "
-                "card can have empty front or back side, "
-                "and the title and author field musn't be empty either!"
+                "There must be at least 1 card in a set,\n"
+                "with no card having an empty front or\n"
+                "back! The title and author fields also\n"
+                "mustn't be empty.\n\n"
             );
-            if (ImGui::Button("Sure thing...")) {
+            if (ImGui::Button("OK")) {
                 SHOW_NO_CARDS_POPUP = false;
                 ImGui::CloseCurrentPopup();
             }
@@ -56,7 +57,7 @@ namespace CardflashUI {
             );
             ImGui::PopItemWidth();
 
-            if ( ImGui::Button("Create new set")
+            if ( ImGui::Button("OK")
                 && title[0] != '\0'
                 && author[0] != '\0'
             ) {
@@ -77,6 +78,11 @@ namespace CardflashUI {
 
                 this->editor_front_bufs.clear();
                 this->editor_back_bufs.clear();
+            }
+
+            ImGui::SameLine();
+            if (ImGui::Button("Cancel")) {
+                this->screen = Screen::Menu;
             }
 
             ImGui::EndPopup();

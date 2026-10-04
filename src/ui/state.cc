@@ -40,8 +40,8 @@ namespace CardflashUI {
             case Screen::SetView:
                 this->SetView(w, h, top_bar_height);
                 break;
-            case Screen::FlashCard:
-                this->FlashCard(w, h, top_bar_height);
+            case Screen::FlashcardView:
+                this->FlashcardView(w, h, top_bar_height);
                 break;
             case Screen::Editor:
                 this->Editor(w, h, top_bar_height);
@@ -124,7 +124,7 @@ namespace CardflashUI {
 
         // It's important to run this before clearing and expanding
         // as if one of the buffer is empty (thorws empty string) the
-        // original object would be corruped, which is suboptimal
+        // original object would be corrupted, which is suboptimal
         std::vector<Cardflash::Card> cards;
         for (size_t i = 0; i < this->editor_front_bufs.size(); ++i) {
             try {

@@ -23,8 +23,8 @@ namespace CardflashUI {
         auto flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
         if (ImGui::BeginPopupModal("Are you sure?###suretoedit", NULL, flags)) {
             ImGui::Text(
-                "Editing a set will wipe all statistics data."
-                "\nAre you sure you want to proceed?"
+                "Editing a set will reset all statistics\n"
+                "data! Do you still wish to proceed?"
             );
 
             if (ImGui::Button("Yes")) {
@@ -94,7 +94,7 @@ namespace CardflashUI {
             0,
             12
         );
-        draw_list->PathStroke(IM_COL32(115, 121, 148, 255), CIRCLE_LINE_THICKNESS);
+        draw_list->PathStroke(IM_COL32(69, 71, 90, 255), CIRCLE_LINE_THICKNESS); // Catppuccin Mocha Surface 1
 
         // std::cout << known_percentage << this->tracked_set.value()->GetRefCards().size() << this->set_view_cards_know << std::endl;
         // Draw the already known circle part with green
@@ -104,9 +104,9 @@ namespace CardflashUI {
             RADIAN_OFFSET,
             (2*PI * known_percentage) + RADIAN_OFFSET
         );
-        draw_list->PathStroke(IM_COL32(166, 209, 137, 255), CIRCLE_LINE_THICKNESS);
+        draw_list->PathStroke(IM_COL32(166, 227, 161, 255), CIRCLE_LINE_THICKNESS); // Catppuccin Mocha Green
 
-        // Draw the still learning circle part with red
+        // Draw the still learning circle part with yellow
         draw_list->PathArcTo(
             center,
             50 - CIRCLE_LINE_THICKNESS,
@@ -114,21 +114,36 @@ namespace CardflashUI {
             (2*PI * known_percentage) + RADIAN_OFFSET,
             (2*PI * known_percentage) + (2*PI * learning_percentage) + RADIAN_OFFSET
         );
-        draw_list->PathStroke(IM_COL32(231, 130, 132, 255), CIRCLE_LINE_THICKNESS);
+        draw_list->PathStroke(IM_COL32(249, 226, 175, 255), CIRCLE_LINE_THICKNESS); // Catppuccin Mocha Yellow
 
         Dummy(ImVec2(100, 100));
-        SetItemTooltip("Shows how much card you know:\nGREY: You haven't told us\n"
-            "RED: Still learning\nGREEN: Already know");
+        SetItemTooltip(
+            "This circle displays how many cards\n"
+            "you've learned.\n"
+            "\n"
+            "GREEN - Already know\n"
+            "YELLOW - Still learning\n"
+            "GRAY - Not specified\n"
+            "\n"
+            "You can change these tags at any time\n"
+            "in the Flashcard View.\n"
+        );
 
         // ==== Cards ====
         SeparatorText("Cards");
 
-        if (Button("Reveal all")) {
+        if (Button("Reveal All")) {
             this-> set_view_reveal_all = !this-> set_view_reveal_all;
         }
+
         SameLine();
-        if(Button("Edit")) {
+        if (Button("Open Editor")) {
             SHOW_EDIT_CONFIRMATION = true;
+        }
+
+        SameLine();
+        if (Button("Open Flashcard View")) {
+            this->screen = Screen::FlashcardView;
         }
 
         BeginTable("setview_card_preview", 2);

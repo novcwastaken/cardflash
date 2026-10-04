@@ -17,7 +17,7 @@ namespace CardflashUI {
         /// Viewing a set
         SetView,
         /// Playing flashcard mode in a set
-        FlashCard,
+        FlashcardView,
         /// In editor
         Editor,
     };
@@ -87,6 +87,18 @@ namespace CardflashUI {
         std::array<char, 1024> editor_subject;
         // ==== !EDITOR ====
 
+        // ==== FLASHCARD VIEW ====
+
+        // Stores whether the currently displayed card is revealed or not.
+        bool flashcard_view_is_current_card_revealed = false;
+
+        // Stores the index of the card that is currently displayed.
+        size_t flashcard_view_current_card_index = 0;
+
+        // Updates the current card reference based on the new index.
+        void UpdateCurrentCard(size_t new_index);
+        // ==== !FLASHCARD VIEW ====
+
         /// Renders the top menu bar
         float TopBar(GLFWwindow* window);
 
@@ -105,7 +117,7 @@ namespace CardflashUI {
         void SetView(int window_width, int window_height, int top_bar_height);
 
         // Tracked set must not be nullopt when calling this
-        void FlashCard(int window_width, int window_height, int top_bar_height);
+        void FlashcardView(int window_width, int window_height, int top_bar_height);
 
         public:
             void Render(int w, int h, GLFWwindow* window);
