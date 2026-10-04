@@ -132,8 +132,8 @@ namespace CardflashUI {
         // ==== Cards ====
         SeparatorText("Cards");
 
-        if (Button("Reveal All")) {
-            this-> set_view_reveal_all = !this-> set_view_reveal_all;
+        if (Button(this->set_view_reveal_all ? "Hide all" : "Reveal all")) {
+            this->set_view_reveal_all = !this-> set_view_reveal_all;
         }
 
         SameLine();

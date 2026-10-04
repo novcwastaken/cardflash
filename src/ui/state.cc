@@ -3,6 +3,7 @@
 #include "state.hh"
 #include "backend/backend.hh"
 #include "uuid_v4.h"
+#include <algorithm>
 #include <imgui.h>
 #include <cassert>
 
@@ -97,6 +98,12 @@ namespace CardflashUI {
         this->set_view_should_update_statistics = true;
         this->set_view_cards_know = 0;
         this->set_view_cards_learning = 0;
+
+        // Clear flashcard view stuff
+        this->flashcard_view_is_shuffled = false;
+        this->flashcard_view_is_current_card_revealed = false;
+        this->flashcard_view_index_order_index = 0;
+        this->flashcard_view_index_order.clear();
     }
 
     void UiState::SetSetAsTracked(Cardflash::Set set) {
@@ -181,5 +188,34 @@ namespace CardflashUI {
         }
 
         this->set_view_should_update_statistics = false;
+    }
+
+    void UiState::ShuffleIndexOrder() {
+        assert(this->tracked_set.has_value());
+
+        this->flashcard_view_index_order_index = 0;
+        this->flashcard_view_is_current_card_revealed = false;
+        this->flashcard_view_is_shuffled = true;
+        std::shuffle(
+            flashcard_view_index_order.begin(),
+            flashcard_view_index_order.end(),
+            this->random_engine
+        );
+    }
+
+    void UiState::LoadIndexOrder() {
+        this->flashcard_view_index_order.clear();
+        this->
+            flashcard_view_index_order
+            .reserve(
+                this->
+                    tracked_set
+                    .value()
+                    ->GetRefCards()
+                    .size()
+            );
+
+        for (size_t i = 0; i < this->tracked_set.value()->GetRefCards().size(); ++i)
+            this->flashcard_view_index_order.push_back(i);
     }
 }

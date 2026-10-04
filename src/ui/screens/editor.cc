@@ -82,6 +82,9 @@ namespace CardflashUI {
 
             ImGui::SameLine();
             if (ImGui::Button("Cancel")) {
+                title.fill(0);
+                author.fill(0);
+                subject.fill(0);
                 this->screen = Screen::Menu;
             }
 

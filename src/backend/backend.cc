@@ -606,7 +606,7 @@ namespace Cardflash {
     }
 
     void Set::SetCardLearningStatus(size_t index, CardLearningStatus lstatus) {
-        if (!this->IsSetFinalized() || this->cards.size() >= index)
+        if (!this->IsSetFinalized() || this->cards.size() <= index)
             throw(std::out_of_range(
                 "Tried to SetCardLearningStatus with a index greater than cards.size()"
             ));

@@ -7,6 +7,7 @@
 #include "backend/backend.hh"
 #include <GLFW/glfw3.h>
 #include <optional>
+#include <random>
 #include <vector>
 
 namespace CardflashUI {
@@ -89,14 +90,28 @@ namespace CardflashUI {
 
         // ==== FLASHCARD VIEW ====
 
+        // Leave this alone!
+        std::mt19937_64 random_engine;
+
+        // Whether flashcard_view_index_order is shuffled or not
+        bool flashcard_view_is_shuffled = false;
+        bool flashcard_view_hide_known = false;
+
         // Stores whether the currently displayed card is revealed or not.
         bool flashcard_view_is_current_card_revealed = false;
 
-        // Stores the index of the card that is currently displayed.
-        size_t flashcard_view_current_card_index = 0;
+        // Stores the index in the flashcard_view_order that stores
+        // the index of the card.
+        size_t flashcard_view_index_order_index = 0;
+
+        // Stores the order (index) of the flashcards to show
+        std::vector<size_t> flashcard_view_index_order;
+
 
         // Updates the current card reference based on the new index.
         void UpdateCurrentCard(size_t new_index);
+        void ShuffleIndexOrder();
+        void LoadIndexOrder();
         // ==== !FLASHCARD VIEW ====
 
         /// Renders the top menu bar
@@ -121,6 +136,10 @@ namespace CardflashUI {
 
         public:
             void Render(int w, int h, GLFWwindow* window);
+            inline UiState() {
+                std::random_device rd;
+                this->random_engine = std::mt19937_64(rd());
+            }
     };
 }
 
