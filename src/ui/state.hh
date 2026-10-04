@@ -5,6 +5,7 @@
 #define __STATE_HH_IFNDEF__
 
 #include "backend/backend.hh"
+#include "ui/theming/theme.hh"
 #include <GLFW/glfw3.h>
 #include <optional>
 #include <vector>
@@ -39,6 +40,7 @@ namespace CardflashUI {
         // saves the theme between frames)
         //
         // Little help (to steal from) https://github.com/ocornut/imgui/issues/707
+        void SetCurrentTheme(CatppuccinTheme* t);
 
         // ==== MAIN MENU ====
         // An ordered clone of the sets. Needed for the main menu
@@ -88,7 +90,6 @@ namespace CardflashUI {
         // ==== !EDITOR ====
 
         // ==== FLASHCARD VIEW ====
-
         // Stores whether the currently displayed card is revealed or not.
         bool flashcard_view_is_current_card_revealed = false;
 
@@ -121,6 +122,7 @@ namespace CardflashUI {
 
         public:
             void Render(int w, int h, GLFWwindow* window);
+            CatppuccinTheme* GetCurrentTheme();
     };
 }
 

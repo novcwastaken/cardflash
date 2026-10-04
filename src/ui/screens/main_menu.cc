@@ -49,10 +49,12 @@ namespace CardflashUI {
 
     /// The main menu (wow)
     void UiState::MainMenu(int window_width, int window_height, int top_bar_height) {
+        float margin = 8;
+
         ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
 
-        ImGui::SetNextWindowPos(ImVec2(0, top_bar_height)); // Magic number
-        ImGui::SetNextWindowSize(ImVec2(window_width, window_height));
+        ImGui::SetNextWindowPos(ImVec2(margin, top_bar_height + margin)); // Magic number
+        ImGui::SetNextWindowSize(ImVec2(window_width - margin*2, window_height - top_bar_height - margin*2));
         ImGui::Begin("Main Menu", nullptr, flags);
 
         ImGui::Text("Welcome back!");

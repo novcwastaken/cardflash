@@ -48,6 +48,12 @@ int main() {
 
         ImGui::Render();
         glViewport(0, 0, w, h);
+        glClearColor(
+            (float)state_ptr->GetCurrentTheme()->crust.r/255,
+            (float)state_ptr->GetCurrentTheme()->crust.g/255,
+            (float)state_ptr->GetCurrentTheme()->crust.b/255,
+            1
+        );
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

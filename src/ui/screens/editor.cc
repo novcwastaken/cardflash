@@ -39,19 +39,19 @@ namespace CardflashUI {
             ImGui::PushItemWidth(280);
             ImGui::InputTextWithHint(
                 "##newset_popup_title",
-                "Title (required)",
+                "Title*",
                 &(title[0]),
                 1024
             );
             ImGui::InputTextWithHint(
                 "##newset_popup_author",
-                "Author (required)",
+                "Author*",
                 &(author[0]),
                 1024
             );
             ImGui::InputTextWithHint(
                 "##newset_popup_subject",
-                "Subject (optional)",
+                "Subject",
                 &(subject[0]),
                 1024
             );
