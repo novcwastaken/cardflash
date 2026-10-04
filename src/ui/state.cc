@@ -2,6 +2,7 @@
 
 #include "state.hh"
 #include "backend/backend.hh"
+#include "ui/theming/theme.hh"
 #include "uuid_v4.h"
 #include <algorithm>
 #include <imgui.h>
@@ -10,6 +11,12 @@
 #define gato goto
 
 namespace CardflashUI {
+    CatppuccinThemes themes = {};
+
+    CatppuccinThemes* GetThemes() {
+        return &themes;
+    }
+
     void UiState::Render(int w, int h, GLFWwindow* window) {
         this->UpdateOrderedSets();
 
@@ -30,6 +37,7 @@ namespace CardflashUI {
                 }
             }
         }
+
         exitloop:
 
         float top_bar_height = this->TopBar(window);
@@ -50,10 +58,18 @@ namespace CardflashUI {
         }
     }
 
+    void UiState::SetCurrentTheme(CatppuccinTheme* t) {
+        SetupCatppuccinTheme(t);
+        themes.current = t;
+    }
+
+    CatppuccinTheme* UiState::GetCurrentTheme() {
+        return themes.current;
+    }
+
     void UiState::UpdateOrderedSets() {
         if (!this->man.sets_changed)
             return;
-
 
         this->ordered_sets = this->man.GetSetsClone();
         this->ordered_sets_table_selection.clear();

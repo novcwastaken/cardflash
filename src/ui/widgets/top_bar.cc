@@ -47,7 +47,15 @@ namespace CardflashUI {
                 // ImGui::MenuItem("Export Set...");
 
                 ImGui::Separator();
-                ImGui::MenuItem("Preferences");
+                if (ImGui::BeginMenu("Themes")) {
+                    if (ImGui::MenuItem("Catppuccin Latte (light)"))
+                        this->SetCurrentTheme(&(GetThemes()->latte));
+
+                    if (ImGui::MenuItem("Catppuccin Mocha (dark)"))
+                        this->SetCurrentTheme(&(GetThemes()->mocha));
+
+                    ImGui::EndMenu();
+                }
 
                 ImGui::Separator();
                 if (ImGui::MenuItem("Quit")) {

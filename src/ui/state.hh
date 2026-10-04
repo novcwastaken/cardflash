@@ -5,12 +5,15 @@
 #define __STATE_HH_IFNDEF__
 
 #include "backend/backend.hh"
+#include "ui/theming/theme.hh"
 #include <GLFW/glfw3.h>
 #include <optional>
 #include <random>
 #include <vector>
 
 namespace CardflashUI {
+    CatppuccinThemes* GetThemes();
+
     /// Possible states of the main window
     enum class Screen : short {
         /// In the menu
@@ -34,12 +37,8 @@ namespace CardflashUI {
         Cardflash::SetManager man = Cardflash::SetManager();
 
         // ==== LOOK / THEMING ====
-        // TODO: add an enum to track which theme is used right now.
-        // TODO: add a function to switch the theme and call that in render
-        // every frame (or just when the themes changes, if imgui
-        // saves the theme between frames)
-        //
-        // Little help (to steal from) https://github.com/ocornut/imgui/issues/707
+        public: void SetCurrentTheme(CatppuccinTheme* t);
+        private:
 
         // ==== MAIN MENU ====
         // An ordered clone of the sets. Needed for the main menu
@@ -96,7 +95,6 @@ namespace CardflashUI {
         // Whether flashcard_view_index_order is shuffled or not
         bool flashcard_view_is_shuffled = false;
         bool flashcard_view_hide_known = false;
-
         // Stores whether the currently displayed card is revealed or not.
         bool flashcard_view_is_current_card_revealed = false;
 
@@ -140,6 +138,7 @@ namespace CardflashUI {
                 std::random_device rd;
                 this->random_engine = std::mt19937_64(rd());
             }
+            CatppuccinTheme* GetCurrentTheme();
     };
 }
 

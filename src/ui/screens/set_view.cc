@@ -94,7 +94,7 @@ namespace CardflashUI {
             0,
             12
         );
-        draw_list->PathStroke(IM_COL32(69, 71, 90, 255), CIRCLE_LINE_THICKNESS); // Catppuccin Mocha Surface 1
+        draw_list->PathStroke(GetThemes()->current->base.ToImU32(), CIRCLE_LINE_THICKNESS); // Catppuccin Mocha Surface 1
 
         // std::cout << known_percentage << this->tracked_set.value()->GetRefCards().size() << this->set_view_cards_know << std::endl;
         // Draw the already known circle part with green
@@ -104,9 +104,9 @@ namespace CardflashUI {
             RADIAN_OFFSET,
             (2*PI * known_percentage) + RADIAN_OFFSET
         );
-        draw_list->PathStroke(IM_COL32(166, 227, 161, 255), CIRCLE_LINE_THICKNESS); // Catppuccin Mocha Green
+        draw_list->PathStroke(GetThemes()->current->green.ToImU32(), CIRCLE_LINE_THICKNESS); // Catppuccin Mocha Green
 
-        // Draw the still learning circle part with yellow
+        // Paint the still learning circle to red. Muahaha
         draw_list->PathArcTo(
             center,
             50 - CIRCLE_LINE_THICKNESS,
@@ -114,7 +114,7 @@ namespace CardflashUI {
             (2*PI * known_percentage) + RADIAN_OFFSET,
             (2*PI * known_percentage) + (2*PI * learning_percentage) + RADIAN_OFFSET
         );
-        draw_list->PathStroke(IM_COL32(249, 226, 175, 255), CIRCLE_LINE_THICKNESS); // Catppuccin Mocha Yellow
+        draw_list->PathStroke(GetThemes()->current->red.ToImU32(), CIRCLE_LINE_THICKNESS); // Catppuccin Mocha Yellow
 
         Dummy(ImVec2(100, 100));
         SetItemTooltip(

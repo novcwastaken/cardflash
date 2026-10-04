@@ -30,6 +30,7 @@ int main() {
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     CardflashUI::UiState* state_ptr = new CardflashUI::UiState();
+    state_ptr->SetCurrentTheme(&(CardflashUI::GetThemes()->mocha));
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -48,6 +49,12 @@ int main() {
 
         ImGui::Render();
         glViewport(0, 0, w, h);
+        glClearColor(
+            (float)state_ptr->GetCurrentTheme()->crust.r/255,
+            (float)state_ptr->GetCurrentTheme()->crust.g/255,
+            (float)state_ptr->GetCurrentTheme()->crust.b/255,
+            1
+        );
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
