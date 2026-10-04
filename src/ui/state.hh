@@ -22,6 +22,7 @@ namespace CardflashUI {
         Editor,
     };
 
+
     struct Bool { bool value = false; };
 
     // This should be a container for different state objects
@@ -30,6 +31,14 @@ namespace CardflashUI {
     class UiState {
         Screen screen = Screen::Menu;
         Cardflash::SetManager man = Cardflash::SetManager();
+
+        // ==== LOOK / THEMING ====
+        // TODO: add an enum to track which theme is used right now.
+        // TODO: add a function to switch the theme and call that in render
+        // every frame (or just when the themes changes, if imgui
+        // saves the theme between frames)
+        //
+        // Little help (to steal from) https://github.com/ocornut/imgui/issues/707
 
         // ==== MAIN MENU ====
         // An ordered clone of the sets. Needed for the main menu

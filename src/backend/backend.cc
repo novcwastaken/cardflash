@@ -75,25 +75,21 @@ namespace Cardflash {
         return this->back;
     }
 
-    inline const void Card::SetFront(std::string s) {
+    inline void Card::SetFront(std::string s) {
         if (s.length() == 0)
             throw(EmptyString("Called SetFront with s being 0 long!"));
 
         this->front = s;
     }
 
-    inline const void Card::SetBack(std::string s) {
+    inline void Card::SetBack(std::string s) {
         if (s.length() == 0)
             throw(EmptyString("Called SetBack with s being 0 long!"));
 
         this->back = s;
     }
 
-    inline const size_t Card::GetFrontAndBackSize() const {
-        return this->front.size() + this->back.size();
-    }
-
-    inline const std::string Card::LearningStatusFmt() const {
+    std::string Card::LearningStatusFmt() const {
         std::string buff;
 
         switch (this->learning_status) {
@@ -133,7 +129,7 @@ namespace Cardflash {
         return this->uuid;
     }
 
-    const void Set::SetLastOpenedTimestamp() {
+    void Set::SetLastOpenedTimestamp() {
         SDL_Time time;
         if (!SDL_GetCurrentTime(&time)) {
             std::cout << "Failed to get system time!" << std::endl;
@@ -142,7 +138,7 @@ namespace Cardflash {
         this->last_opened_timestamp = time;
     }
 
-    const int64_t Set::GetLastOpenedTimestamp() const {
+    int64_t Set::GetLastOpenedTimestamp() const {
         return this->last_opened_timestamp;
     }
 
@@ -573,11 +569,11 @@ namespace Cardflash {
     }
 
 
-    const bool Set::IsSetFinalized() const {
+    bool Set::IsSetFinalized() const {
         return this->are_cards_ready;
     }
 
-    const void Set::Expand(Card with)  {
+    void Set::Expand(Card with)  {
         if (!this->are_cards_ready) {
             this->are_cards_ready = true;
             this->cards = std::vector(1, with);
@@ -586,7 +582,7 @@ namespace Cardflash {
         }
     }
 
-    const void Set::Expand(std::vector<Card> with) {
+    void Set::Expand(std::vector<Card> with) {
         if (!this->are_cards_ready) {
             this->are_cards_ready = true;
             this->cards = std::move(with);
@@ -599,7 +595,7 @@ namespace Cardflash {
         }
     }
 
-    const void Set::Expand(std::vector<Card>& with) {
+    void Set::Expand(std::vector<Card>& with) {
         this->are_cards_ready = true;
         this->cards.insert(this->cards.end(), with.begin(), with.end());
     }
@@ -609,6 +605,15 @@ namespace Cardflash {
         this->are_cards_ready = false;
     }
 
+    void Set::SetCardLearningStatus(size_t index, CardLearningStatus lstatus) {
+        if (!this->IsSetFinalized() || this->cards.size() >= index)
+            throw(std::out_of_range(
+                "Tried to SetCardLearningStatus with a index greater than cards.size()"
+            ));
+
+        this->cards[index].learning_status = lstatus;
+    }
+
     const std::vector<Card>& Set::GetRefCards() const {
         if (!this->are_cards_ready)
             throw(SetNotFinalized("The set is not ready to be read! (cards are not ready)"));
@@ -616,7 +621,7 @@ namespace Cardflash {
         return this->cards;
     }
 
-    const std::string Set::DebugFmt() const {
+    std::string Set::DebugFmt() const {
         std::string buff;
 
         buff.append(std::format(

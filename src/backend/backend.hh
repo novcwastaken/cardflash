@@ -72,15 +72,17 @@ namespace Cardflash {
             const std::string& GetBack() const;
 
             /// Throws EmptyString if s.length() is 0
-            const void SetFront(std::string s);
+            void SetFront(std::string s);
 
             /// Throws EmptyString if s.length() is 0
-            const void SetBack(std::string s);
+            void SetBack(std::string s);
 
             /// Returns the length of the front and back
-            inline const size_t GetFrontAndBackSize() const;
+            inline size_t GetFrontAndBackSize() const {
+                return this->front.size() + this->back.size();
+            }
 
-            inline const std::string LearningStatusFmt() const;
+            std::string LearningStatusFmt() const;
     };
 
     class Set {
@@ -125,20 +127,28 @@ namespace Cardflash {
             /// Returns whether the set is ready to be read (finalized).
             /// Calling GetRefCards while this is false will cause SetNotFinalized
             /// to be thrown!
-            const bool IsSetFinalized() const;
+            bool IsSetFinalized() const;
 
-            const void Expand(Card with);
+            void Expand(Card with);
 
-            const void Expand(std::vector<Card> with);
+            void Expand(std::vector<Card> with);
 
-            const void Expand(std::vector<Card>& with);
+            void Expand(std::vector<Card>& with);
 
             /// Clears are the stored cards
             void Clear();
 
-            const void SetLastOpenedTimestamp();
+            /// Sets the indexth card's learning status to lstatus.
+            ///
+            /// Throws:
+            ///
+            /// std::out_of_range if the index is out of the range of the cards,
+            /// or there are no cards (aka IsSetFinalized is false).
+            void SetCardLearningStatus(size_t index, CardLearningStatus lstatus);
 
-            const int64_t GetLastOpenedTimestamp() const;
+            void SetLastOpenedTimestamp();
+
+            int64_t GetLastOpenedTimestamp() const;
 
             /// Returns a static reference to the internal card vector.
             /// Do not modify it!
@@ -187,7 +197,7 @@ namespace Cardflash {
             std::vector<uint8_t> Serialize();
 
             /// Returns a debug string
-            const std::string DebugFmt() const;
+            std::string DebugFmt() const;
     };
 
     enum class BufferState : short {
