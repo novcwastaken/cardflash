@@ -13,6 +13,8 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+    glfwWindowHint(GLFW_RESIZABLE, false);
+
     GLFWwindow* window = glfwCreateWindow(1280, 720, "Cardflash", nullptr, nullptr);
     if (!window) { glfwTerminate(); return 1; }
 
@@ -30,7 +32,9 @@ int main() {
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     CardflashUI::UiState* state_ptr = new CardflashUI::UiState();
+
     state_ptr->SetCurrentTheme(&(CardflashUI::GetThemes()->mocha));
+    state_ptr->LoadFonts();
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();

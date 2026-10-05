@@ -17,6 +17,19 @@ namespace CardflashUI {
         return &themes;
     }
 
+    void UiState::LoadFonts() {
+        ImGuiIO& io = ImGui::GetIO();
+
+        font_regular = io.Fonts->AddFontFromFileTTF("fonts/Inter_18pt-Regular.ttf", 18.0f);
+        font_semibold = io.Fonts->AddFontFromFileTTF("fonts/Inter_18pt-SemiBold.ttf", 18.0f);
+        font_bold = io.Fonts->AddFontFromFileTTF("fonts/Inter_18pt-Bold.ttf", 18.0f);
+
+        font_big = io.Fonts->AddFontFromFileTTF("fonts/Inter_18pt-Bold.ttf", 54.0f);
+        font_less_bigger_big = io.Fonts->AddFontFromFileTTF("fonts/Inter_18pt-SemiBold.ttf", 24.0f);
+
+        io.FontDefault = font_regular;
+    }
+
     void UiState::Render(int w, int h, GLFWwindow* window) {
         this->UpdateOrderedSets();
 

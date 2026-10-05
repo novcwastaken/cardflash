@@ -55,19 +55,65 @@ namespace CardflashUI {
 
         ImGui::SetNextWindowPos(ImVec2(margin, top_bar_height + margin)); // Magic number
         ImGui::SetNextWindowSize(ImVec2(window_width - margin*2, window_height - top_bar_height - margin*2));
+
         ImGui::Begin("Main Menu", nullptr, flags);
 
-        ImGui::Text("Welcome back!");
+        // Vertical centering
+        static float last_group_height = 0.0f; // Height from previous frame
+        float available_height = ImGui::GetContentRegionAvail().y;
 
-        if (ImGui::Button("Create new set")) this->screen = Screen::Editor;
+        if (last_group_height > 0.0f && available_height > last_group_height) {
+            float groupStartY = (available_height - last_group_height) * 0.5f;
+            ImGui::SetCursorPosY(groupStartY);
+        }
+
+        // Horizontal centering
+        float available_width = ImGui::GetContentRegionAvail().x;
+        float group_width = available_width / 2;
+
+        float group_start_x = (available_width - group_width) / 2;
+        ImGui::SetCursorPosX(group_start_x);
+
+        ImGui::BeginGroup();
+
+        // CARDFLASH
+        const char* header1 = "CARDFLASH";
+        ImGui::PushFont(font_big);
+        float header1_width = ImGui::CalcTextSize(header1).x;
+        ImGui::SetCursorPosX(group_start_x + (group_width - header1_width) * 0.5f); // Centered in group
+        ImGui::TextUnformatted(header1);
+        ImGui::PopFont();
+
+        // Welcome back!
+        const char* header2 = "Welcome back!";
+        ImGui::PushFont(font_less_bigger_big);
+        float header2_width = ImGui::CalcTextSize(header2).x;
+        ImGui::SetCursorPosX(group_start_x + (group_width - header2_width) * 0.5f); // Centered in group
+        ImGui::TextUnformatted(header2);
+        ImGui::PopFont();
+
+        ImGui::Dummy(ImVec2(0, 30));
+
+        // BUTTONS
+        const float button_width = 70.0f;
+        const float spacing = ImGui::GetStyle().ItemSpacing.x;
+        const int button_count = 4; // Create, Search, Import, Refresh
+
+        float total_row_width = (button_width * button_count) + (spacing * (button_count - 1));
+
+        float button_row_start_x = group_start_x + (group_width - total_row_width) * 0.5f;
+
+        ImGui::SetCursorPosX(button_row_start_x);
+
+        if (ButtonWrapper("Create", ImVec2(button_width, 0))) this->screen = Screen::Editor;
         ImGui::SetItemTooltip("Create a new set.");
 
         ImGui::SameLine();
-        if (ImGui::Button("Search")) {}
+        if (ButtonWrapper("Search", ImVec2(button_width, 0))) {}
         ImGui::SetItemTooltip("Open a search bar to find saved sets.");
 
         ImGui::SameLine();
-        if (ImGui::Button("Import")) {}
+        if (ButtonWrapper("Import", ImVec2(button_width, 0))) {}
         ImGui::SetItemTooltip("Open a file dialog to find and\nimport a set from your computer.");
 
         // Refresh
@@ -80,20 +126,23 @@ namespace CardflashUI {
             }
 
             ImGui::SameLine();
-            if (ImGui::Button(scan_button_text.c_str())) {
+            if (ButtonWrapper(scan_button_text.c_str(), ImVec2(button_width, 0))) {
                 this->man.Scan();
             }
             ImGui::SetItemTooltip("Scan for new sets in the local directory.");
         }
 
+        ImGui::Dummy(ImVec2(0, 30));
+
         // Recents
-        if (ImGui::BeginTable("main_menu_recents_table", 5)) {
+        if (ImGui::BeginTable("main_menu_recents_table", 5, ImGuiTableFlags_RowBg, ImVec2(group_width, 0.0f))) {
             // == Header ==
             auto table_flags = ImGuiTableColumnFlags_WidthFixed;
+
             ImGui::TableSetupColumn("Name", table_flags);
             ImGui::TableSetupColumn("Author", table_flags);
             ImGui::TableSetupColumn("Subject", table_flags);
-            ImGui::TableSetupColumn("Cards", table_flags, window_width * 0.05);
+            ImGui::TableSetupColumn("Cards", table_flags);
             ImGui::TableSetupColumn("Last opened", table_flags);
 
             ImGui::TableHeadersRow();
@@ -135,6 +184,9 @@ namespace CardflashUI {
 
             ImGui::EndTable();
         }
+
+        ImGui::EndGroup();
+        last_group_height = ImGui::GetItemRectSize().y;
 
         ImGui::End();
     }

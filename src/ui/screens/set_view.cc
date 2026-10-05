@@ -94,7 +94,7 @@ namespace CardflashUI {
             0,
             12
         );
-        draw_list->PathStroke(GetThemes()->current->base.ToImU32(), CIRCLE_LINE_THICKNESS); // Catppuccin Mocha Surface 1
+        draw_list->PathStroke(GetThemes()->current->surface0.ToImU32(), CIRCLE_LINE_THICKNESS); // Catppuccin Mocha Surface 0
 
         // std::cout << known_percentage << this->tracked_set.value()->GetRefCards().size() << this->set_view_cards_know << std::endl;
         // Draw the already known circle part with green
@@ -114,7 +114,7 @@ namespace CardflashUI {
             (2*PI * known_percentage) + RADIAN_OFFSET,
             (2*PI * known_percentage) + (2*PI * learning_percentage) + RADIAN_OFFSET
         );
-        draw_list->PathStroke(GetThemes()->current->red.ToImU32(), CIRCLE_LINE_THICKNESS); // Catppuccin Mocha Yellow
+        draw_list->PathStroke(GetThemes()->current->red.ToImU32(), CIRCLE_LINE_THICKNESS); // Catppuccin Mocha Red
 
         Dummy(ImVec2(100, 100));
         SetItemTooltip(
@@ -122,7 +122,7 @@ namespace CardflashUI {
             "you've learned.\n"
             "\n"
             "GREEN - Already know\n"
-            "YELLOW - Still learning\n"
+            "RED - Still learning\n"
             "GRAY - Not specified\n"
             "\n"
             "You can change these tags at any time\n"

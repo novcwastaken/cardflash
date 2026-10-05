@@ -8,7 +8,7 @@
 static bool SHOW_NO_CARDS_POPUP = false;
 
 namespace CardflashUI {
-    void NoCardsPopup() {
+    void UiState::NoCardsPopup() {
         if (SHOW_NO_CARDS_POPUP) ImGui::OpenPopup("No cards!");
 
         auto flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize;
@@ -19,7 +19,7 @@ namespace CardflashUI {
                 "back! The title and author fields also\n"
                 "mustn't be empty.\n\n"
             );
-            if (ImGui::Button("OK")) {
+            if (ButtonWrapper("OK")) {
                 SHOW_NO_CARDS_POPUP = false;
                 ImGui::CloseCurrentPopup();
             }
@@ -57,7 +57,7 @@ namespace CardflashUI {
             );
             ImGui::PopItemWidth();
 
-            if ( ImGui::Button("OK")
+            if (ButtonWrapper("OK")
                 && title[0] != '\0'
                 && author[0] != '\0'
             ) {
@@ -81,7 +81,7 @@ namespace CardflashUI {
             }
 
             ImGui::SameLine();
-            if (ImGui::Button("Cancel")) {
+            if (ButtonWrapper("Cancel")) {
                 title.fill(0);
                 author.fill(0);
                 subject.fill(0);
@@ -93,6 +93,8 @@ namespace CardflashUI {
     }
 
     void UiState::Editor(int window_width, int window_height, int top_bar_height) {
+        float margin = 8;
+
         if (!this->tracked_set.has_value()) {
             ImGui::OpenPopup("Create New Set");
             this->CreateNewSet();
@@ -102,8 +104,8 @@ namespace CardflashUI {
         NoCardsPopup();
 
         // ==== LEFT SIDE: Card editor ====
-        ImGui::SetNextWindowPos(ImVec2(0, top_bar_height));
-        ImGui::SetNextWindowSize(ImVec2(window_width*0.8, window_height));
+        ImGui::SetNextWindowPos(ImVec2(margin, top_bar_height + margin));
+        ImGui::SetNextWindowSize(ImVec2(window_width*0.8 - margin*2, window_height - top_bar_height - margin*2));
         ImGuiWindowFlags flags =
             ImGuiWindowFlags_NoTitleBar
             | ImGuiWindowFlags_NoResize
@@ -136,12 +138,12 @@ namespace CardflashUI {
             }
         }
 
-        if (ImGui::Button("Add card")) {
+        if (ButtonWrapper("Add")) {
             this->editor_front_bufs.resize(this->editor_front_bufs.size() + 1);
             this->editor_back_bufs.resize(this->editor_back_bufs.size() + 1);
         }
         ImGui::SameLine();
-        if (!this->editor_front_bufs.empty() && ImGui::Button("Remove last card")) {
+        if (!this->editor_front_bufs.empty() && ButtonWrapper("Remove last card")) {
 
             this->editor_front_bufs.pop_back();
             this->editor_back_bufs.pop_back();
@@ -153,13 +155,15 @@ namespace CardflashUI {
             }
         }
         ImGui::SameLine();
-        if (ImGui::Button("Save") && !this->SaveTracked()) SHOW_NO_CARDS_POPUP = true;
+        if (ButtonWrapper("Save") && !this->SaveTracked()) SHOW_NO_CARDS_POPUP = true;
 
         ImGui::SameLine();
-        if (ImGui::Button("To overview (exit editor)")) {
+        if (ButtonWrapper("Exit Editor")) {
             if (this->SaveTracked()) this->screen = Screen::SetView;
             else SHOW_NO_CARDS_POPUP = true;
         }
+
+        ImGui::Dummy(ImVec2(0, 8));
 
         if (ImGui::BeginTable("Cards", 3)) {
             // == HEADER ==
@@ -167,18 +171,18 @@ namespace CardflashUI {
             ImGui::TableSetupColumn(
                 "Front###editortablefrontcolumthing",
                 table_flags,
-                window_width * 0.8 * 0.4
+                window_width * 0.8 * 0.4 - margin
             );
             ImGui::TableSetupColumn(
                 "Back###editortablebackcolumthing",
                 table_flags,
-                window_width * 0.8 * 0.4
+                window_width * 0.8 * 0.4 - margin
             );
 
             ImGui::TableSetupColumn(
                 "Controls###editortablecontrolcolumthing",
                 table_flags,
-                window_width * 0.8 * 0.2
+                window_width * 0.8 * 0.2 - margin
             );
             ImGui::TableHeadersRow();
 
@@ -189,6 +193,8 @@ namespace CardflashUI {
 
                 ImGui::TableNextColumn();
                 ImGui::PushItemWidth(window_width * 0.8 * 0.3999);
+
+                //ImGui::PushStyleColor(ImGuiCol_FrameBg, GetCurrentTheme()->base.ToImVec4());
 
                 // Front
                 ImGui::InputTextWithHint(
@@ -209,7 +215,10 @@ namespace CardflashUI {
                     1024
                 );
 
+                //ImGui::PopStyleColor();
+
                 ImGui::TableNextColumn();
+                ImGui::PushStyleColor(ImGuiCol_Text, GetCurrentTheme()->crust.ToImVec4());
                 if (ImGui::ArrowButton("Up", ImGuiDir_Up) && i > 0) {
                     std::array<char, 1024> previous_front = std::move(this->editor_front_bufs[i - 1]);
                     std::array<char, 1024> previous_back = std::move(this->editor_back_bufs[i - 1]);
@@ -232,9 +241,10 @@ namespace CardflashUI {
                     this->editor_front_bufs[i] = std::move(next_front);
                     this->editor_back_bufs[i] = std::move(next_back);
                 }
+                ImGui::PopStyleColor();
 
                 ImGui::SameLine();
-                if (ImGui::Button("Delete")) {
+                if (ButtonWrapper("Delete")) {
                     this->editor_front_bufs.erase(this->editor_front_bufs.begin() + i);
                     this->editor_back_bufs.erase(this->editor_back_bufs.begin() + i);
 
@@ -255,8 +265,8 @@ namespace CardflashUI {
 
         // ==== RIGHT SIDE: Metadata ====
 
-        ImGui::SetNextWindowPos(ImVec2(window_width*0.8, top_bar_height));
-        ImGui::SetNextWindowSize(ImVec2(window_width*0.2, window_height));
+        ImGui::SetNextWindowPos(ImVec2(window_width*0.8, top_bar_height + margin));
+        ImGui::SetNextWindowSize(ImVec2(window_width*0.2 - margin, window_height - top_bar_height - margin*2));
         ImGui::Begin("Metadata", nullptr, flags);
 
         ImGui::PushItemWidth(window_width * 0.18);

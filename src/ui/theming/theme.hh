@@ -19,9 +19,15 @@ namespace CardflashUI {
         RGB mantle;
         RGB crust;
 
+        RGB surface0;
+        RGB surface1;
+
         RGB text;
         RGB overlay;
-        RGB accent;
+
+        RGB accent0;
+        RGB accent1;
+        RGB accent2;
 
         RGB green;
         RGB yellow;
@@ -40,8 +46,14 @@ namespace CardflashUI {
             .mantle = RGB(24, 24, 37),
             .crust = RGB(17, 17, 27),
 
+            .surface0 = RGB(49, 50, 68),
+            .surface1 = RGB(69, 71, 90),
+
             .text = RGB(205, 214, 244),
-            .accent = RGB(203, 166, 247),
+
+            .accent0 = RGB(203, 166, 247),
+            .accent1 = RGB(174, 129, 227),
+            .accent2 = RGB(126, 67, 196),
 
             .green = RGB(166, 227, 161),
             .yellow = RGB(249, 226, 175),
@@ -53,8 +65,14 @@ namespace CardflashUI {
             .mantle = RGB(230, 233, 239),
             .crust = RGB(220, 224, 232),
 
+            .surface0 = RGB(204, 208, 218),
+            .surface1 = RGB(188, 192, 204),
+
             .text = RGB(76, 79, 105),
-            .accent = RGB(136, 57, 239),
+
+            .accent0 = RGB(136, 57, 239),
+            .accent1 = RGB(),
+            .accent2 = RGB(),
 
             .green = RGB(64, 160, 43),
             .yellow = RGB(223, 142, 29),

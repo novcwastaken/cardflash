@@ -37,7 +37,18 @@ namespace CardflashUI {
         Cardflash::SetManager man = Cardflash::SetManager();
 
         // ==== LOOK / THEMING ====
-        public: void SetCurrentTheme(CatppuccinTheme* t);
+        public:
+            void SetCurrentTheme(CatppuccinTheme* t);
+            void LoadFonts();
+            bool ButtonWrapper(std::string label, ImVec2 size = ImVec2(0, 0));
+
+            ImFont* font_regular;
+            ImFont* font_semibold; // Generally for buttons
+            ImFont* font_bold;
+
+            ImFont* font_big;
+            ImFont* font_less_bigger_big;
+
         private:
 
         // ==== MAIN MENU ====
@@ -77,6 +88,7 @@ namespace CardflashUI {
         // front or back buffers being empty, or a text field being empty!
         //
         // Asserts that tracked_set has a value!
+        void NoCardsPopup();
         bool SaveTracked();
         void CreateNewSet();
         std::optional<Cardflash::Set> editor_temp_set = std::nullopt;

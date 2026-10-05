@@ -66,7 +66,12 @@ target_link_libraries(Cardflash PRIVATE imgui)
 target_link_libraries(Cardflash PRIVATE SDL3::SDL3)
 target_link_libraries(Cardflash PRIVATE uuid_v4::uuid_v4)
 
-
+# # Font thingy mingy
+# add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+#     COMMAND ${CMAKE_COMMAND} -E copy_directory
+#         "${CMAKE_CURRENT_SOURCE_DIR}/fonts"
+#         "$<TARGET_FILE_DIR:${PROJECT_NAME}>/fonts"
+# )
 
 # ===== TESTS =====
 include(FetchContent)
