@@ -3,7 +3,9 @@
 #include "state.hh"
 #include "backend/backend.hh"
 #include "ui/theming/theme.hh"
-#include "uuid_v4.h"
+
+#include <uuid_v4.h>
+
 #include <algorithm>
 #include <imgui.h>
 #include <cassert>
@@ -121,6 +123,7 @@ namespace CardflashUI {
         else {
             if (this->screen == Screen::FlashcardView) {
                 this->tracked_set.value()->SetLastOpenedTimestamp();
+                this->set_view_should_update_statistics = true;
                 this->man.Save(this->tracked_set.value());
                 this->man.sets_changed = true;
             }

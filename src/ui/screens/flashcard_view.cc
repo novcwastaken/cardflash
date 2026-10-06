@@ -1,7 +1,8 @@
 
 #include "../state.hh"
 #include "backend/backend.hh"
-#include "imgui.h"
+
+#include <imgui.h>
 
 namespace CardflashUI {
     void UiState::FlashcardView(int window_width, int window_height, int top_bar_height) {
@@ -25,7 +26,18 @@ namespace CardflashUI {
         ImGui::Begin("Flashcard View", nullptr, flags);
 
         if (ButtonWrapper("Back to Set View")) {
+            this->flashcard_view_is_shuffled = false;
+            this->flashcard_view_is_current_card_revealed = false;
+            this->flashcard_view_index_order_index = 0;
+            this->flashcard_view_index_order.clear();
+            this->tracked_set.value()->SetLastOpenedTimestamp();
+            this->set_view_should_update_statistics = true;
+            this->man.Save(this->tracked_set.value());
+            this->man.sets_changed = true;
+
             this->screen = Screen::SetView;
+            ImGui::End();
+            return;
         }
 
         // == CARD ==
