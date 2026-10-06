@@ -1,10 +1,11 @@
-#include "SDL3/SDL_iostream.h"
-#include "SDL3/SDL_stdinc.h"
 #include "backend.hh"
 
-#include "SDL3/SDL_filesystem.h"
-#include "SDL3/SDL_asyncio.h"
+#include "SDL3/SDL_iostream.h"
+#include "SDL3/SDL_stdinc.h"
+#include <SDL3/SDL_filesystem.h>
+#include <SDL3/SDL_asyncio.h>
 #include <SDL3/SDL_main.h>
+#include <tinyfiledialogs.h>
 
 #include <atomic>
 #include <cstdint>
@@ -381,5 +382,62 @@ namespace Cardflash {
         );
     }
     //  !Scanning
+
+
+    bool SetManager::Import() {
+        // char const* filePatterns[1] = {".cardflash"};
+        // The file is not guaranteed to actually be a
+        // .cardflash!
+        char const* path_maybe = tinyfd_openFileDialog(
+            "Selecct a .cardflash file to import!",
+            NULL,
+            1,
+            NULL,
+            "cardflash files",
+            1
+        );
+
+        if (!path_maybe) return false;
+
+        size_t data_size;
+        uint8_t *data = reinterpret_cast<uint8_t*>(SDL_LoadFile(path_maybe, &data_size));
+        if (!data || !data_size) {
+            this->last_import_error = std::string(SDL_GetError());
+            return false;
+        }
+
+        std::vector<uint8_t> vec (data, data + data_size);
+        SDL_free(data);
+
+        try {
+            Set set = Set(vec);
+
+            for (const Set& vset : this->sets) {
+                if (vset.GetUUID() == set.GetUUID()) {
+                    this->last_import_error = "This set alrady exist!";
+                    return false;
+                }
+            }
+
+            this->sets.push_back(set);
+        } catch (const DeserializationError& e) {
+            std::cout << "Import: An error occured while deserializing a set: "
+                << e.what() << std::endl;
+
+            this->last_import_error = e.what();
+            return false;
+        } catch (const EmptyString & e) {
+            std::cout << "Import: An error occured while deserializing a set: "
+                << e.what() << std::endl;
+
+            this->last_import_error = e.what();
+            return false;
+        }
+
+        this->Save(&this->sets[this->sets.size() - 1]);
+        this->sets_changed = true;
+
+       return true;
+    }
     // end class SetManager
 }

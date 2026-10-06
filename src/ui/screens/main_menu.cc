@@ -113,7 +113,10 @@ namespace CardflashUI {
         // ImGui::SetItemTooltip("Open a search bar to find saved sets.");
 
         ImGui::SameLine();
-        if (ButtonWrapper("Import", ImVec2(button_width, 0))) {}
+        if (ButtonWrapper("Import", ImVec2(button_width, 0))) {
+            this->DropTrackedSet();
+            this->show_import_failure_poup = !this->man.Import();
+        }
         ImGui::SetItemTooltip("Open a file dialog to find and\nimport a set from your computer.");
 
         // Refresh

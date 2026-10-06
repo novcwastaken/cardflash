@@ -342,12 +342,15 @@ namespace Cardflash {
             ///     @subject / @s           searches through subjects
             ///     @card                   searches through all cards' content
             ///         (only done by this flag, not by default)
-            void Search(std::string query);
+            // MAYBE TODO: IMPLEMENT TS
+            // void Search(std::string query);
 
-            /// Try to import a card located at path
-            void Import(std::string path);
+            /// Open a file dialog and asks the user to select a
+            /// file.
+            bool Import();
+            std::string last_import_error = "";
 
-            /// Opens a file dialog for the user to chose where to save a set
+            /// Opens a file dialog for the user to chose where to save Set
             void Export(const Set& set);
     };
 }
