@@ -5,6 +5,8 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
+#define DISABLE_RESIZE false
+
 int main() {
     if (!glfwInit()) return 1;
 
@@ -13,7 +15,9 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
+    #if DISABLE_RESIZE
     glfwWindowHint(GLFW_RESIZABLE, false);
+    #endif
 
     GLFWwindow* window = glfwCreateWindow(1280, 720, "Cardflash", nullptr, nullptr);
     if (!window) { glfwTerminate(); return 1; }

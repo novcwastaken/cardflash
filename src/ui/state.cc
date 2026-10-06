@@ -111,8 +111,20 @@ namespace CardflashUI {
     void UiState::DropTrackedSet() {
         if (!this->tracked_set.has_value()) return;
 
+        // If we were in flashcard mode save the card for changes with
+        // learning status in cards + last opened date!
+
+        // If the editor_temp_set has a value we drop it, as its's the
+        // editor's task to save it!
         if (this->editor_temp_set.has_value()) this->editor_temp_set = std::nullopt;
-        else this->man.DropSetRef(this->tracked_set.value());
+        else {
+            if (this->screen == Screen::FlashcardView) {
+                this->tracked_set.value()->SetLastOpenedTimestamp();
+                this->man.Save(this->tracked_set.value());
+                this->man.sets_changed = true;
+            }
+            this->man.DropSetRef(this->tracked_set.value());
+        }
         this->tracked_set = std::nullopt;
 
         // Clear editor buffers
