@@ -27,13 +27,13 @@ namespace CardflashUI {
                 "data! Do you still wish to proceed?"
             );
 
-            if (ImGui::Button("Yes")) {
+            if (ButtonWrapper("Yes")) {
                 SHOW_EDIT_CONFIRMATION = false;
                 this->screen = Screen::Editor;
                 ImGui::CloseCurrentPopup();
             }
             SameLine();
-            if (Button("I would rather not")) {
+            if (ButtonWrapper("I would rather not")) {
                 SHOW_EDIT_CONFIRMATION = false;
                 ImGui::CloseCurrentPopup();
             }
@@ -47,31 +47,81 @@ namespace CardflashUI {
         this->GetTrackedSetStatistics();
         this->SureToEditPopup();
 
-        // Fullscreen the window
-        SetNextWindowPos(ImVec2(0, top_bar_height));
-        SetNextWindowSize(ImVec2(window_width, window_height - top_bar_height));
+        // Fullscreen window
+        float margin = 8;
+
+        ImGui::SetNextWindowPos(ImVec2(margin, top_bar_height + margin));
+        ImGui::SetNextWindowSize(ImVec2(window_width - margin*2, window_height - top_bar_height - margin*2));
 
         ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
         Begin("card_view_window", nullptr, flags);
 
-        auto style = GetStyle();
+        Dummy(ImVec2(0, 24));
 
         // ==== Title / author / subject ====
-        PushFont(NULL, style.FontSizeBase * 4.0f);
-        Text("%s", this->tracked_set.value()->title.c_str());
+        std::string title_str = this->tracked_set.value()->title;
+        std::string author_str = std::format("by {0}", this->tracked_set.value()->author);
+        std::string subject_str = this->tracked_set.value()->subject;
+
+        PushFont(font_big);
+        float title_w = CalcTextSize(title_str.c_str()).x;
         PopFont();
-        Text(
-            "%s - %s",
-            this->tracked_set.value()->author.c_str(),
-            this->tracked_set.value()->subject.c_str()
-        );
+
+        PushFont(font_less_bigger_big);
+        float author_w = CalcTextSize(author_str.c_str()).x;
+        PopFont();
+
+        PushFont(font_regular);
+        float subject_w = CalcTextSize(subject_str.c_str()).x;
+        PopFont();
+
+        float text_group_width = std::max({title_w, author_w, subject_w});
+
+        // Circle stuff
+        constexpr float circle_diameter = 100.0f;
+        constexpr float circle_radius = circle_diameter * 0.5f;
+        constexpr float spacing_between_text_and_circle = 30.0f;
+
+        float combined_group_width = text_group_width + spacing_between_text_and_circle + circle_diameter;
+        float avail_width = GetContentRegionAvail().x;
+        float start_x = (avail_width - combined_group_width) * 0.5f;
+
+        if (start_x > GetCursorPosX()) {
+            SetCursorPosX(start_x);
+        }
+
+        BeginGroup();
+
+        // --- Left side: Text group ---
+        BeginGroup();
+        PushFont(font_big);
+        TextUnformatted(title_str.c_str());
+        PopFont();
+
+        PushFont(font_less_bigger_big);
+        TextUnformatted(author_str.c_str());
+        PopFont();
+
+        PushFont(font_regular);
+        TextUnformatted(subject_str.c_str());
+        PopFont();
+        EndGroup();
+
+
 
         // ==== Stats (TODO!) ====
         ImDrawList* draw_list = GetWindowDrawList();
+
+        float text_group_height = GetItemRectSize().y;
+        float vertical_offset = (text_group_height - circle_diameter) * 0.5f;
+
+        SameLine(0.0f, spacing_between_text_and_circle);
+        if (vertical_offset > 0.0f) {
+            SetCursorPosY(GetCursorPosY() + vertical_offset);
+        }
+
         ImVec2 p = GetCursorScreenPos();
-        ImVec2 center = p;
-        center.x += 50;
-        center.y += 50;
+        ImVec2 center = ImVec2(p.x + circle_radius, p.y + circle_radius);
 
         // == Cirlcle for known/learning/unknown right next to it explaining it ==
         float known_percentage, learning_percentage;
@@ -90,7 +140,7 @@ namespace CardflashUI {
         // drawing the full circle, the loss of precision is fine.
         draw_list->PathArcToFast(
             center,
-            50 - CIRCLE_LINE_THICKNESS,
+            circle_radius - CIRCLE_LINE_THICKNESS,
             0,
             12
         );
@@ -100,7 +150,7 @@ namespace CardflashUI {
         // Draw the already known circle part with green
         draw_list->PathArcTo(
             center,
-            50 - CIRCLE_LINE_THICKNESS,
+            circle_radius - CIRCLE_LINE_THICKNESS,
             RADIAN_OFFSET,
             (2*PI * known_percentage) + RADIAN_OFFSET
         );
@@ -109,14 +159,14 @@ namespace CardflashUI {
         // Paint the still learning circle to red. Muahaha
         draw_list->PathArcTo(
             center,
-            50 - CIRCLE_LINE_THICKNESS,
+            circle_radius - CIRCLE_LINE_THICKNESS,
             // Start where the know circle ends
             (2*PI * known_percentage) + RADIAN_OFFSET,
             (2*PI * known_percentage) + (2*PI * learning_percentage) + RADIAN_OFFSET
         );
         draw_list->PathStroke(GetThemes()->current->red.ToImU32(), CIRCLE_LINE_THICKNESS); // Catppuccin Mocha Red
 
-        Dummy(ImVec2(100, 100));
+        Dummy(ImVec2(circle_diameter, circle_diameter));
         SetItemTooltip(
             "This circle displays how many cards\n"
             "you've learned.\n"
@@ -129,22 +179,28 @@ namespace CardflashUI {
             "in the Flashcard View.\n"
         );
 
+        EndGroup();
+
+        Dummy(ImVec2(0, 24));
+
         // ==== Cards ====
         SeparatorText("Cards");
 
-        if (Button(this->set_view_reveal_all ? "Hide all" : "Reveal all")) {
+        if (ButtonWrapper(this->set_view_reveal_all ? "Hide all" : "Reveal all")) {
             this->set_view_reveal_all = !this-> set_view_reveal_all;
         }
 
         SameLine();
-        if (Button("Open Editor")) {
+        if (ButtonWrapper("Open Editor")) {
             SHOW_EDIT_CONFIRMATION = true;
         }
 
         SameLine();
-        if (Button("Open Flashcard View")) {
+        if (ButtonWrapper("Open Flashcard View")) {
             this->screen = Screen::FlashcardView;
         }
+
+        Dummy(ImVec2(0, 24));
 
         BeginTable("setview_card_preview", 2);
 
