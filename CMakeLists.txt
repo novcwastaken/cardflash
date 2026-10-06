@@ -1,13 +1,23 @@
 cmake_minimum_required(VERSION 3.16)
-project(Cardflash CXX)
+project(Cardflash C CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+if(MSVC)
+    add_compile_options(/WX /W4)
+else()
+    add_compile_options(-Wall ) # -Werror
+endif()
+
+# ==== Dynamically linked stuff ====
 find_package(glfw3 3.3 REQUIRED)
 find_package(OpenGL REQUIRED)
 
+# ==== Static dependencies ====
+
+# IMGUI
 set(IMGUI_DIR external/imgui)
 add_library(imgui STATIC
   ${IMGUI_DIR}/imgui.cpp
@@ -17,19 +27,13 @@ add_library(imgui STATIC
   ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp
   ${IMGUI_DIR}/backends/imgui_impl_opengl3.cpp
 )
-
-if(MSVC)
-  add_compile_options(/WX /W4)
-else()
-  add_compile_options(-Wall ) # -Werror
-endif()
-
 target_include_directories(imgui PUBLIC
   ${IMGUI_DIR}
   ${IMGUI_DIR}/backends
 )
+target_link_libraries(imgui PUBLIC glfw OpenGL::GL)
 
-# ==== SDL3 config ====
+# == SDL3 config ==
 set(SDL_SHARED OFF CACHE BOOL "" FORCE)
 set(SDL_STATIC ON  CACHE BOOL "" FORCE)
 
@@ -56,7 +60,8 @@ set(SDL_UNIX_CONSOLE_BUILD ON CACHE BOOL "" FORCE)
 add_subdirectory(external/SDL EXCLUDE_FROM_ALL)
 add_subdirectory(external/UUID4 EXCLUDE_FROM_ALL)
 
-target_link_libraries(imgui PUBLIC glfw OpenGL::GL)
+add_subdirectory(external/tinyfiledialogs EXCLUDE_FROM_ALL)
+# target_include_directories(tinyfiledialogs PUBLIC external/tinyfiledialogs)
 
 file(GLOB_RECURSE CARDFLASH_SOURCES CONFIGURE_DEPENDS src/*.cc)
 add_executable(Cardflash ${CARDFLASH_SOURCES})
@@ -65,13 +70,10 @@ target_include_directories(Cardflash PRIVATE src)
 target_link_libraries(Cardflash PRIVATE imgui)
 target_link_libraries(Cardflash PRIVATE SDL3::SDL3)
 target_link_libraries(Cardflash PRIVATE uuid_v4::uuid_v4)
+target_link_libraries(Cardflash PRIVATE tinyfiledialogs)
 
-# # Font thingy mingy
-# add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-#     COMMAND ${CMAKE_COMMAND} -E copy_directory
-#         "${CMAKE_CURRENT_SOURCE_DIR}/fonts"
-#         "$<TARGET_FILE_DIR:${PROJECT_NAME}>/fonts"
-# )
+
+
 
 # ===== TESTS =====
 include(FetchContent)

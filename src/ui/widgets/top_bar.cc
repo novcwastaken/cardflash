@@ -42,6 +42,14 @@ namespace CardflashUI {
                     ImGui::EndMenu();
                 }
 
+                if (this->screen == Screen::Menu) {
+                    ImGui::Separator();
+                    if (ImGui::MenuItem("Import set...")) {
+                        this->DropTrackedSet();
+                        this->show_import_failure_poup = !this->man.Import();
+                    }
+                }
+
                 // Not sure if this will actually be implemented, we'll see
                 // ImGui::Separator();
                 // ImGui::MenuItem("Export Set...");

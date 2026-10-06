@@ -50,8 +50,9 @@ namespace CardflashUI {
                 }
             }
         }
-
         exitloop:
+
+        this->ImportFailurePopup();
 
         float top_bar_height = this->TopBar(window);
 
@@ -258,5 +259,31 @@ namespace CardflashUI {
 
         for (size_t i = 0; i < this->tracked_set.value()->GetRefCards().size(); ++i)
             this->flashcard_view_index_order.push_back(i);
+    }
+
+    void UiState::ImportFailurePopup() {
+        if (this->show_import_failure_poup)
+            ImGui::OpenPopup("import_failure_popup");
+
+        auto flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+        ImGui::SetNextWindowSize(ImVec2(200, 120));
+        if (ImGui::BeginPopupModal(
+            "Failed to import that...###import_failure_popup",
+            NULL,
+            flags
+        )) {
+            ImGui::Text(
+                "Failed to import: "
+            );
+            ImGui::Text("%s", this->man.last_import_error.c_str());
+
+            if (this->ButtonWrapper("Ok")) {
+                this->show_import_failure_poup = false;
+                this->man.last_import_error.clear();
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::EndPopup();
+        }
     }
 }

@@ -145,6 +145,9 @@ namespace CardflashUI {
         void FlashcardView(int window_width, int window_height, int top_bar_height);
 
         public:
+            bool show_import_failure_poup = false;
+            void ImportFailurePopup();
+
             void Render(int w, int h, GLFWwindow* window);
             inline UiState() {
                 std::random_device rd;
