@@ -241,6 +241,8 @@ namespace CardflashUI {
         this->flashcard_view_index_order_index = 0;
         this->flashcard_view_is_current_card_revealed = false;
         this->flashcard_view_is_shuffled = true;
+
+        this->LoadIndexOrder(this->flashcard_view_hide_known);
         std::shuffle(
             flashcard_view_index_order.begin(),
             flashcard_view_index_order.end(),
@@ -248,20 +250,21 @@ namespace CardflashUI {
         );
     }
 
-    void UiState::LoadIndexOrder() {
+    void UiState::LoadIndexOrder(bool filter_known) {
         this->flashcard_view_index_order.clear();
-        this->
-            flashcard_view_index_order
-            .reserve(
-                this->
-                    tracked_set
-                    .value()
-                    ->GetRefCards()
-                    .size()
-            );
 
-        for (size_t i = 0; i < this->tracked_set.value()->GetRefCards().size(); ++i)
-            this->flashcard_view_index_order.push_back(i);
+        auto refcards = this->tracked_set.value()->GetRefCards();
+        this->flashcard_view_index_order.reserve(refcards.size());
+
+        for (size_t i = 0; i < refcards.size(); ++i) {
+            // x & y => need a condition which is true, but only when both are true
+
+            if (!(
+                refcards[i].learning_status == Cardflash::CardLearningStatus::Know
+                && filter_known
+            ))
+                this->flashcard_view_index_order.push_back(i);
+        }
     }
 
     void UiState::ImportFailurePopup() {

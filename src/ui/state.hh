@@ -100,7 +100,6 @@ namespace CardflashUI {
         // ==== !EDITOR ====
 
         // ==== FLASHCARD VIEW ====
-
         // Leave this alone!
         std::mt19937_64 random_engine;
 
@@ -121,7 +120,7 @@ namespace CardflashUI {
         // Updates the current card reference based on the new index.
         void UpdateCurrentCard(size_t new_index);
         void ShuffleIndexOrder();
-        void LoadIndexOrder();
+        void LoadIndexOrder(bool filter_known = false);
         // ==== !FLASHCARD VIEW ====
 
         /// Renders the top menu bar

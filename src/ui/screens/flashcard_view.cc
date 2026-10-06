@@ -82,14 +82,25 @@ namespace CardflashUI {
 
         ImGui::BeginGroup();
 
-        if (ButtonWrapper("Reveal"))
-            flashcard_view_is_current_card_revealed = !flashcard_view_is_current_card_revealed;
+        if (!flashcard_view_hide_known && ButtonWrapper("Filter known")) {
+            this->flashcard_view_hide_known = true;
+            this->flashcard_view_index_order_index = 0;
+
+            if (this->flashcard_view_is_shuffled) this->ShuffleIndexOrder();
+            else this->LoadIndexOrder(true);
+        } else if (flashcard_view_hide_known && ButtonWrapper("Show known")) {
+            this->flashcard_view_hide_known = false;
+            this->flashcard_view_index_order_index = 0;
+
+            if (this->flashcard_view_is_shuffled) this->ShuffleIndexOrder();
+            else this->LoadIndexOrder();
+        }
 
         ImGui::SameLine();
         if (!this->flashcard_view_is_shuffled && ButtonWrapper("Shuffle")) this->ShuffleIndexOrder();
         else if (this->flashcard_view_is_shuffled && ButtonWrapper("Unshuffle")) {
             this->flashcard_view_is_shuffled = false;
-            this->LoadIndexOrder();
+            this->LoadIndexOrder(this->flashcard_view_hide_known);
             this->flashcard_view_index_order_index = 0;
         }
 
@@ -148,7 +159,7 @@ namespace CardflashUI {
             std::format(
                 "{0}/{1}",
                 this->flashcard_view_index_order_index + 1,
-                ref_cards.size()
+                this->flashcard_view_index_order.size()
             )
             .c_str()
         );
