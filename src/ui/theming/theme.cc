@@ -2,13 +2,6 @@
 #include "imgui.h"
 
 namespace CardflashUI {
-    constexpr ImVec4 RGB::ToImVec4() const {
-        return ImVec4((float)this->r/255, (float)this->g/255, (float)this->b/255, 255);
-    }
-    ImU32 RGB::ToImU32() const {
-        return ImGui::GetColorU32(this->ToImVec4());
-    }
-
     void SetupCatppuccinTheme(CatppuccinTheme* t) {
         ImGuiStyle& style = ImGui::GetStyle();
         ImVec4* colors = style.Colors;

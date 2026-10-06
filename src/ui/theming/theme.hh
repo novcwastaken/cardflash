@@ -8,8 +8,12 @@ namespace CardflashUI {
     // Helper for storing RGB values.
     struct RGB {
         uint8_t r, g, b;
-        constexpr ImVec4 ToImVec4() const;
-        ImU32 ToImU32() const;
+        inline ImVec4 ToImVec4() const {
+            return ImVec4((float)this->r/255, (float)this->g/255, (float)this->b/255, 255);
+        }
+        inline ImU32 ToImU32() const {
+            return ImGui::GetColorU32(this->ToImVec4());
+        }
     };
 
     // Container for Catppuccin theme color keys.

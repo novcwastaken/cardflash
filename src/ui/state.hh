@@ -151,6 +151,7 @@ namespace CardflashUI {
                 this->random_engine = std::mt19937_64(rd());
             }
             CatppuccinTheme* GetCurrentTheme();
+            inline void Scan() {this->man.Scan();}
     };
 }
 

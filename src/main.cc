@@ -35,6 +35,7 @@ int main() {
 
     state_ptr->SetCurrentTheme(&(CardflashUI::GetThemes()->mocha));
     state_ptr->LoadFonts();
+    state_ptr->Scan();
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();

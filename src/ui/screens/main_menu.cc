@@ -97,7 +97,7 @@ namespace CardflashUI {
         // BUTTONS
         const float button_width = 70.0f;
         const float spacing = ImGui::GetStyle().ItemSpacing.x;
-        const int button_count = 4; // Create, Search, Import, Refresh
+        const int button_count = 3; // Create, Import, Refresh
 
         float total_row_width = (button_width * button_count) + (spacing * (button_count - 1));
 
@@ -108,9 +108,9 @@ namespace CardflashUI {
         if (ButtonWrapper("Create", ImVec2(button_width, 0))) this->screen = Screen::Editor;
         ImGui::SetItemTooltip("Create a new set.");
 
-        ImGui::SameLine();
-        if (ButtonWrapper("Search", ImVec2(button_width, 0))) {}
-        ImGui::SetItemTooltip("Open a search bar to find saved sets.");
+        // ImGui::SameLine();
+        // if (ButtonWrapper("Search", ImVec2(button_width, 0))) {}
+        // ImGui::SetItemTooltip("Open a search bar to find saved sets.");
 
         ImGui::SameLine();
         if (ButtonWrapper("Import", ImVec2(button_width, 0))) {}
