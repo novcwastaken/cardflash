@@ -67,14 +67,6 @@ namespace Cardflash {
         this->learning_status = lstatus;
     }
 
-    inline const std::string& Card::GetFront() const {
-        return this->front;
-    }
-
-    inline const std::string& Card::GetBack() const {
-        return this->back;
-    }
-
     inline void Card::SetFront(std::string s) {
         if (s.length() == 0)
             throw(EmptyString("Called SetFront with s being 0 long!"));

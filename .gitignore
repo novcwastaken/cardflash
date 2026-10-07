@@ -36,6 +36,7 @@ JSON/
 
 ## Commonly used CMake directories & CMake CPM cache
 build*/
+release*/
 .cache
 
 ## Xcode & macOS artifacts
