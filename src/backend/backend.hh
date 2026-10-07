@@ -351,7 +351,8 @@ namespace Cardflash {
             std::string last_import_error = "";
 
             /// Opens a file dialog for the user to chose where to save Set
-            void Export(const Set& set);
+            bool Export(Set* set);
+            std::string last_export_error = "";
     };
 }
 

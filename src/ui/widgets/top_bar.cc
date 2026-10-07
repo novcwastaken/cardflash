@@ -50,9 +50,12 @@ namespace CardflashUI {
                     }
                 }
 
-                // Not sure if this will actually be implemented, we'll see
-                // ImGui::Separator();
-                // ImGui::MenuItem("Export Set...");
+                if (this->screen != Screen::Menu && this->tracked_set.has_value()) {
+                    ImGui::Separator();
+                    if (ImGui::MenuItem("Export Set..."))
+                        this->show_export_failure_poup
+                            = !this->man.Export(this->tracked_set.value());
+                }
 
                 ImGui::Separator();
                 if (ImGui::BeginMenu("Themes")) {

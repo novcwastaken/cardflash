@@ -55,6 +55,7 @@ namespace CardflashUI {
         exitloop:
 
         this->ImportFailurePopup();
+        this->ExportFailurePopup();
 
         float top_bar_height = this->TopBar(window);
 
@@ -286,6 +287,32 @@ namespace CardflashUI {
             if (this->ButtonWrapper("Ok")) {
                 this->show_import_failure_poup = false;
                 this->man.last_import_error.clear();
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::EndPopup();
+        }
+    }
+
+    void UiState::ExportFailurePopup() {
+        if (this->show_export_failure_poup)
+            ImGui::OpenPopup("export_failure_popup");
+
+        auto flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+        ImGui::SetNextWindowSize(ImVec2(200, 120));
+        if (ImGui::BeginPopupModal(
+            "Failed to export the set###export_failure_popup",
+            NULL,
+            flags
+        )) {
+            ImGui::Text(
+                "Failed to export the set: "
+            );
+            ImGui::Text("%s", this->man.last_export_error.c_str());
+
+            if (this->ButtonWrapper("Ok")) {
+                this->show_export_failure_poup = false;
+                this->man.last_export_error.clear();
                 ImGui::CloseCurrentPopup();
             }
 

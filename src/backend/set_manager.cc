@@ -388,7 +388,7 @@ namespace Cardflash {
         // char const* filePatterns[1] = {".cardflash"};
         // The file is not guaranteed to actually be a
         // .cardflash!
-        char const* path_maybe = tinyfd_openFileDialog(
+        char const* path = tinyfd_openFileDialog(
             "Selecct a .cardflash file to import!",
             NULL,
             1,
@@ -397,10 +397,14 @@ namespace Cardflash {
             1
         );
 
-        if (!path_maybe) return false;
+        if (!path) {
+            this->last_import_error = "Operation cancelled!";
+            return false;
+        }
 
         size_t data_size;
-        uint8_t *data = reinterpret_cast<uint8_t*>(SDL_LoadFile(path_maybe, &data_size));
+        uint8_t *data = reinterpret_cast<uint8_t*>(SDL_LoadFile(path, &data_size));
+        free((char*)path);
         if (!data || !data_size) {
             this->last_import_error = std::string(SDL_GetError());
             return false;
@@ -438,6 +442,46 @@ namespace Cardflash {
         this->sets_changed = true;
 
        return true;
+    }
+
+    bool SetManager::Export(Set* set) {
+        std::vector<uint8_t> set_bytes;
+        try {
+            set_bytes = set->Serialize();
+        } catch (DeserializationError &_) {
+            this->last_export_error = "Set wasn't finalized before trying to export it!";
+            return false;
+        }
+
+        char* path_cstr = tinyfd_saveFileDialog(
+            "Select a location to save the set to...",
+            NULL,
+            1 ,
+            NULL,
+            "cardflash files"
+        );
+        if (path_cstr == NULL) {
+            this->last_export_error = "Operation cancelled!";
+            return false;
+        }
+        std::string path(path_cstr);
+
+        if (!path.ends_with(".cardflash")) path.append(".cardflash");
+
+        SDL_IOStream *file = SDL_IOFromFile(path.c_str(), "w");
+        if (file == NULL) {
+            this->last_export_error = SDL_GetError();
+            return false;
+        }
+        size_t writen = SDL_WriteIO(file, set_bytes.data(), set_bytes.size());
+        SDL_CloseIO(file);
+
+        if (writen != set_bytes.size() || !writen) {
+            this->last_export_error = SDL_GetError();
+            return false;
+        }
+
+        return true;
     }
     // end class SetManager
 }

@@ -147,6 +147,9 @@ namespace CardflashUI {
             bool show_import_failure_poup = false;
             void ImportFailurePopup();
 
+            bool show_export_failure_poup = false;
+            void ExportFailurePopup();
+
             void Render(int w, int h, GLFWwindow* window);
             inline UiState() {
                 std::random_device rd;
