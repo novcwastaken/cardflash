@@ -404,7 +404,6 @@ namespace Cardflash {
 
         size_t data_size;
         uint8_t *data = reinterpret_cast<uint8_t*>(SDL_LoadFile(path, &data_size));
-        free((char*)path);
         if (!data || !data_size) {
             this->last_import_error = std::string(SDL_GetError());
             return false;
