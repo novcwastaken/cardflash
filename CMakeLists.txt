@@ -12,7 +12,30 @@ else()
 endif()
 
 # ==== Dynamically linked stuff ====
-find_package(glfw3 3.3 REQUIRED)
+
+# Give the option to statically link glfw
+option(GLFW_STATIC "Fetch and link GLFW statically" OFF)
+
+if(GLFW_STATIC)
+    include(FetchContent)
+
+    set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+    set(GLFW_INSTALL OFF CACHE BOOL "" FORCE)
+
+    FetchContent_Declare(
+        glfw
+        GIT_REPOSITORY https://github.com/glfw/glfw.git
+        GIT_TAG        3.4
+    )
+
+    FetchContent_MakeAvailable(glfw)
+else()
+    find_package(glfw3 3.3 REQUIRED)
+endif()
+
 find_package(OpenGL REQUIRED)
 
 # ==== Static dependencies ====
